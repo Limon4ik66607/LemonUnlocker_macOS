@@ -3,7 +3,7 @@ name: Build macOS App
 on:
   workflow_dispatch:  # Manual trigger from GitHub UI or CLI
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   build-macos:
