@@ -10,6 +10,7 @@ import webbrowser
 import traceback
 import datetime
 import platform
+import subprocess  # ИСПРАВЛЕНО: Добавлен импорт subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea, 
                              QProgressBar, QStackedWidget, QFileDialog, QMessageBox, 
@@ -197,6 +198,24 @@ class FileUtils:
         s = round(size_bytes / p, 2)
         return "%s %s" % (s, size_name[i])
 
+# ИСПРАВЛЕНО: Добавлена функция для получения директории данных приложения
+def get_app_data_dir():
+    """
+    Возвращает путь к директории для хранения данных приложения.
+    - macOS: ~/Library/Application Support/LemonUnlocker/
+    - Windows: %APPDATA%/LemonUnlocker/
+    - Linux: ~/.config/LemonUnlocker/
+    """
+    if sys.platform == "darwin":
+        base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "LemonUnlocker")
+    elif sys.platform == "win32":
+        base = os.path.join(os.getenv("APPDATA"), "LemonUnlocker")
+    else:
+        base = os.path.join(os.path.expanduser("~"), ".config", "LemonUnlocker")
+    
+    os.makedirs(base, exist_ok=True)
+    return base
+
 class ImprovedLogger:
     def __init__(self, text_widget=None):
         self.widget = text_widget
@@ -236,9 +255,10 @@ class CrashHandler:
 
         # Prepare log content
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        log_dir = "logs"
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
+        
+        # ИСПРАВЛЕНО: Используем app data directory вместо CWD
+        log_dir = os.path.join(get_app_data_dir(), "logs")
+        os.makedirs(log_dir, exist_ok=True)
             
         filename = os.path.join(log_dir, f"crash_log_{timestamp}.txt")
         
@@ -258,11 +278,17 @@ class CrashHandler:
         try:
             app = QApplication.instance()
             if app:
-                # Default message (English)
+                # ИСПРАВЛЕНО: Определены обе версии сообщения
                 msg_en = (
                     f"An unhandled exception occurred.\n"
                     f"Log saved to: {os.path.abspath(filename)}\n\n"
                     f"Please send this file to the developer on Telegram: @L3mon4elo4"
+                )
+                
+                msg_ru = (
+                    f"Произошла необработанная ошибка.\n"
+                    f"Лог сохранён в: {os.path.abspath(filename)}\n\n"
+                    f"Пожалуйста, отправьте этот файл разработчику в Telegram: @L3mon4elo4"
                 )
                 
                 # Check for Russian locale simply via system if possible, or just append it
@@ -427,7 +453,8 @@ class Localization:
 
 class ConfigManager:
     def __init__(self):
-        self.config_file = "config.json"
+        # ИСПРАВЛЕНО: Используем app data directory вместо CWD
+        self.config_file = os.path.join(get_app_data_dir(), "config.json")
         self.config = self.load()
         
     def load(self):
@@ -511,7 +538,6 @@ class Extractor:
     
     def extract_7z(self, zip_path, out_dir):
         """Extract using 7-Zip (required for multi-volume archives)"""
-        import subprocess
         
         # Find 7z on macOS
         sz_paths = []
@@ -700,14 +726,9 @@ class DownloadWorker(QObject):
 
     def _log_error(self, message):
         try:
-            # Use exe directory for logs (not CWD)
-            if getattr(sys, 'frozen', False):
-                base_dir = os.path.dirname(sys.executable)
-            else:
-                base_dir = os.path.dirname(os.path.abspath(__file__))
-            log_dir = os.path.join(base_dir, "logs")
-            if not os.path.exists(log_dir):
-                os.makedirs(log_dir)
+            # ИСПРАВЛЕНО: Используем app data directory
+            log_dir = os.path.join(get_app_data_dir(), "logs")
+            os.makedirs(log_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             filename = os.path.join(log_dir, f"download_error_{timestamp}.txt")
             with open(filename, "w", encoding="utf-8") as f:
@@ -1259,17 +1280,23 @@ class DashboardPage(QWidget):
             
         if folder:
             folder = self._resolve_macos_path(folder)
-            self.config.set("game_path", folder)
-            self.config.save()
-            self.check_stats()
+            # ИСПРАВЛЕНО: Проверяем что folder не None после resolve
+            if folder:
+                self.config.set("game_path", folder)
+                self.config.save()
+                self.check_stats()
 
     def auto_detect(self):
         path = GameDetector.find_game()
         if path:
             path = self._resolve_macos_path(path)
-            self.config.set("game_path", path)
-            self.config.save()
-            self.check_stats()
+            # ИСПРАВЛЕНО: Проверяем что path не None после resolve
+            if path:
+                self.config.set("game_path", path)
+                self.config.save()
+                self.check_stats()
+            else:
+                QMessageBox.warning(self, Localization.get("error"), "Could not resolve game path.")
         else:
             QMessageBox.warning(self, Localization.get("error"), "Could not automatically find The Sims 4.")
 
