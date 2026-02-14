@@ -39,6 +39,7 @@ jobs:
         run: |
           mkdir -p dmg_contents
           cp -R dist/LemonUnlocker.app dmg_contents/
+          ln -s /Applications dmg_contents/Applications
           hdiutil create -volname "LemonUnlocker" -srcfolder dmg_contents -ov -format UDZO LemonUnlocker.dmg
 
       - name: Upload .app as artifact
