@@ -4,8 +4,24 @@ class DLCDatabase:
         self.dlc = {
             "EP01": {"name": "Get to Work", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP01/Sims4_DLC_EP01_Get_to_Work.zip", "size": 1694934094},
             "EP02": {"name": "Get Together", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP02/Sims4_DLC_EP02_Get_Together.zip", "size": 1717179184},
+            "EP03": {
+                "name": "City Living",
+                "urls": [
+                    "https://github.com/l1ntol/lunia-dlc/releases/download/EP03/EP03.7z.001",
+                    "https://github.com/l1ntol/lunia-dlc/releases/download/EP03/EP03.7z.002"
+                ],
+                "size": 2665245680
+            },
             "EP04": {"name": "Cats and Dogs", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP04/Sims4_DLC_EP04_Cats_and_Dogs.zip", "size": 2013068744},
             "EP05": {"name": "Seasons", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP05/Sims4_DLC_EP05_Seasons.zip", "size": 1412690473},
+            "EP06": {
+                "name": "Get Famous",
+                "urls": [
+                    "https://github.com/l1ntol/lunia-dlc/releases/download/EP06/EP06.7z.001",
+                    "https://github.com/l1ntol/lunia-dlc/releases/download/EP06/EP06.7z.002"
+                ],
+                "size": 2840815742
+            },
             "EP07": {"name": "Island Living", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP07/Sims4_DLC_EP07_Island_Living.zip", "size": 1446940021},
             "EP08": {"name": "Discover University", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP08/Sims4_DLC_EP08_Discover_University.zip", "size": 1618423432},
             "EP09": {"name": "Eco Lifestyle", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/EP09/Sims4_DLC_EP09_Eco_Lifestyle.zip", "size": 1490785679},
@@ -106,7 +122,7 @@ class DLCDatabase:
             "SP68": {"name": "Spongebob's House Kit", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/SP68/SP68.zip", "size": 32960563},
             "SP81": {"name": "Prairie Dreams Kit", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/SP81/SP81.zip", "size": 53582634},
             "FP01": {"name": "Holiday Celebration Pack", "url": "https://github.com/l1ntol/lunia-dlc/releases/download/FP01/Sims4_DLC_FP01_Holiday_Celebration_Pack.zip", "size": 30127617},
-            "EP21": {"name": "Royalty & Legacy Grand Bundle", "urls": ["https://github.com/Limon4ik66607/LemonUnlocker-DLS/releases/download/EP21/EP21_Royalty.Legacy.Grand.Bundle.z01", "https://github.com/Limon4ik66607/LemonUnlocker-DLS/releases/download/EP21/EP21_Royalty.Legacy.Grand.Bundle.zip"], "size": 2513829888},
+            "EP21": {"name": "Royalty & Legacy Grand Bundle", "urls": ["https://github.com/Limon4ik66607/LemonUnlocker-DLS/releases/download/EP21/EP21_Royalty.Legacy.Grand.Bundle.z01", "https://github.com/Limon4ik66607/LemonUnlocker-DLS/releases/download/EP21/EP21_Royalty.Legacy.Grand.Bundle.zip"], "size": 2556732797},
             "SP76": {"name": "Silver Screen Style Kit", "url": "https://github.com/Limon4ik66607/LemonUnlocker-DLS/releases/download/SP76/SP76.Silver.Screen.Style.Kit.zip", "size": 90324778},
             "SP77": {"name": "Tea Time Solarium Kit", "url": "https://github.com/Limon4ik66607/LemonUnlocker-DLS/releases/download/SP77/SP77.Tea.Time.Solarium.Kit.zip", "size": 60451469},
         }

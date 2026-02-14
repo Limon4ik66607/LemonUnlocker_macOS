@@ -5,14 +5,24 @@ import json
 import os
 import sys
 
-def get_size(dlc_id, url):
-    try:
-        response = requests.head(url, allow_redirects=True, timeout=5)
-        if response.status_code == 200:
-            return dlc_id, int(response.headers.get('content-length', 0))
-    except:
-        pass
-    return dlc_id, 0
+def get_size(dlc_id, info):
+    total_size = 0
+    urls = []
+    
+    if 'url' in info:
+        urls.append(info['url'])
+    elif 'urls' in info:
+        urls.extend(info['urls'])
+        
+    for url in urls:
+        try:
+            response = requests.head(url, allow_redirects=True, timeout=10)
+            if response.status_code == 200:
+                total_size += int(response.headers.get('content-length', 0))
+        except:
+            pass
+            
+    return dlc_id, total_size
 
 db = DLCDatabase()
 dlcs = db.all()
@@ -26,12 +36,12 @@ if os.path.exists("dlc_sizes.json"):
     except:
         pass
 
-to_fetch = {k: v for k, v in dlcs.items() if k not in results or results[k] == 0}
+to_fetch = [k for k, v in dlcs.items() if k not in results or results[k] == 0]
 
 print(f"Fetching sizes for {len(to_fetch)} remaining DLCs...", file=sys.stderr)
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    future_to_dlc = {executor.submit(get_size, dlc_id, dlcs[dlc_id]['url']): dlc_id for dlc_id in to_fetch}
+    future_to_dlc = {executor.submit(get_size, dlc_id, dlcs[dlc_id]): dlc_id for dlc_id in to_fetch}
     for i, future in enumerate(concurrent.futures.as_completed(future_to_dlc)):
         dlc_id, size = future.result()
         if size > 0:

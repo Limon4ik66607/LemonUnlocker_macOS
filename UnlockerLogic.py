@@ -3,6 +3,7 @@ import sys
 import shutil
 import subprocess
 import time
+import shlex  # ИСПРАВЛЕНО: Добавлен для правильного экранирования команд
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
 from PyQt6.QtCore import Qt
 
@@ -33,12 +34,18 @@ class AdminElevator:
         """Re-launch current script with admin via osascript (AppleScript)."""
         try:
             exe = sys.executable
-            args = " ".join([f'"{a}"' for a in sys.argv])
-            cmd = f'osascript -e \'do shell script "{exe} {args}" with administrator privileges\''
-            subprocess.Popen(cmd, shell=True)
+            # ИСПРАВЛЕНО: Правильное экранирование аргументов для shell
+            args = " ".join([shlex.quote(a) for a in sys.argv])
+            
+            # ИСПРАВЛЕНО: Правильное экранирование для AppleScript
+            script = f'do shell script "{exe} {args}" with administrator privileges'
+            
+            # ИСПРАВЛЕНО: Используем список аргументов вместо shell=True для безопасности
+            subprocess.run(['osascript', '-e', script], check=True)
             sys.exit(0)
         except Exception as e:
-            pass
+            print(f"Failed to elevate privileges: {e}")
+            return False
 
 
 class UnlockerManager:
@@ -63,11 +70,24 @@ class UnlockerManager:
     @staticmethod
     def get_unlocker_app_path():
         """Return the path where we'll create the DLC Unlocker .app bundle."""
-        # Place it in ~/Applications or next to our app
         home = os.path.expanduser("~")
         apps_dir = os.path.join(home, "Applications")
+        
+        # ИСПРАВЛЕНО: Добавлена обработка ошибок создания директории
         if not os.path.exists(apps_dir):
-            os.makedirs(apps_dir, exist_ok=True)
+            try:
+                os.makedirs(apps_dir, exist_ok=True)
+            except Exception as e:
+                # Fallback to /Applications if user ~/Applications fails
+                apps_dir = "/Applications"
+                if not os.access(apps_dir, os.W_OK):
+                    raise PermissionError(
+                        "Cannot create unlocker app. No write access to:\n"
+                        f"- {os.path.join(home, 'Applications')}\n"
+                        f"- /Applications\n\n"
+                        "Please grant Full Disk Access to LemonUnlocker in System Preferences."
+                    )
+        
         return os.path.join(apps_dir, "DLC Unlocker - The Sims 4.app")
 
     @staticmethod
@@ -84,32 +104,87 @@ class UnlockerManager:
         This replicates what 'prepare DLC Unlockers' bash script does.
         """
         # Kill EA processes first
-        try:
-            subprocess.run(['pkill', '-f', 'EADesktop'], 
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(['pkill', '-f', 'EA Desktop'],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            subprocess.run(['pkill', '-f', 'Origin'],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        killed_processes = []
+        processes_to_kill = ['EADesktop', 'EA Desktop', 'Origin']
+        
+        for proc_name in processes_to_kill:
+            try:
+                result = subprocess.run(
+                    ['pkill', '-f', proc_name],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                if result.returncode == 0:
+                    killed_processes.append(proc_name)
+                    logger.log(f"Killed process: {proc_name}")
+            except Exception as e:
+                logger.log(f"Could not kill {proc_name}: {e}", "WARNING")
+        
+        if killed_processes:
+            logger.log(f"Terminated {len(killed_processes)} EA processes")
             time.sleep(1)
-        except:
-            pass
 
         base_dir = UnlockerManager.get_base_path()
         unlocker_src = os.path.join(base_dir, "unlocker_mac", "files")
 
+        # ИСПРАВЛЕНО: Проверка существования директории с исходниками с fallback
+        if not os.path.exists(unlocker_src):
+            logger.log(f"Primary source path not found: {unlocker_src}", "WARNING")
+            # Попробовать альтернативные пути
+            alt_paths = [
+                os.path.join(base_dir, "files"),
+                os.path.join(base_dir, "unlocker_mac"),
+                os.path.join(os.path.dirname(base_dir), "unlocker_mac", "files"),
+                os.path.join(os.path.dirname(base_dir), "files")
+            ]
+            
+            for alt in alt_paths:
+                if os.path.exists(alt):
+                    unlocker_src = alt
+                    logger.log(f"Using alternative path: {unlocker_src}")
+                    break
+            
+            if not os.path.exists(unlocker_src):
+                return False, (
+                    f"Unlocker source directory not found.\n\n"
+                    f"Expected at: {os.path.join(base_dir, 'unlocker_mac', 'files')}\n\n"
+                    f"Please ensure unlocker files are included in the app bundle."
+                )
+
         # Verify source files exist
-        required_files = ["unlocker", "anadius.dylib", "thesims4.cfg", "Info.plist"]
+        required_files = ["unlocker", "anadius.dylib", "thesims4.cfg"]
+        missing_files = []
         for fname in required_files:
             if not os.path.exists(os.path.join(unlocker_src, fname)):
-                return False, f"Source file not found: {fname}"
+                missing_files.append(fname)
+        
+        if missing_files:
+            return False, f"Required files missing: {', '.join(missing_files)}\nSource: {unlocker_src}"
 
-        app_path = UnlockerManager.get_unlocker_app_path()
+        # ИСПРАВЛЕНО: Обработка ошибок при получении пути к app
+        try:
+            app_path = UnlockerManager.get_unlocker_app_path()
+        except PermissionError as e:
+            return False, str(e)
+        
         bundle_path = os.path.join(app_path, "Contents", "MacOS")
 
         try:
-            # Create .app bundle structure
-            os.makedirs(bundle_path, exist_ok=True)
+            # ИСПРАВЛЕНО: Create .app bundle structure с проверкой прав
+            try:
+                os.makedirs(bundle_path, exist_ok=True)
+            except Exception as e:
+                return False, f"Cannot create app bundle directory (permission denied): {bundle_path}\n\n{str(e)}"
+
+            # ИСПРАВЛЕНО: Проверка прав на запись
+            if not os.access(bundle_path, os.W_OK):
+                return False, (
+                    f"No write permission to: {bundle_path}\n\n"
+                    "Please grant Full Disk Access to LemonUnlocker in:\n"
+                    "System Preferences → Security & Privacy → Privacy → Full Disk Access"
+                )
+            
             logger.log(f"Creating .app bundle at: {app_path}")
 
             # Copy unlocker binary
@@ -146,10 +221,44 @@ class UnlockerManager:
                 shutil.copy2(override_src, os.path.join(bundle_path, "anadius_override.cfg"))
                 logger.log("Copied override config")
 
-            # Copy Info.plist
+            # ИСПРАВЛЕНО: Copy or create Info.plist
+            plist_src = os.path.join(unlocker_src, "Info.plist")
             plist_dst = os.path.join(app_path, "Contents", "Info.plist")
-            shutil.copy2(os.path.join(unlocker_src, "Info.plist"), plist_dst)
-            logger.log("Copied Info.plist")
+            
+            if os.path.exists(plist_src):
+                shutil.copy2(plist_src, plist_dst)
+                logger.log("Copied Info.plist")
+            else:
+                # Создаем минимальный Info.plist
+                plist_content = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>unlocker</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.lemon.dlcunlocker</string>
+    <key>CFBundleName</key>
+    <string>DLC Unlocker - The Sims 4</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13</string>
+</dict>
+</plist>"""
+                with open(plist_dst, 'w') as f:
+                    f.write(plist_content)
+                logger.log("Created default Info.plist")
+            
+            # ИСПРАВЛЕНО: Copy icon if available
+            icon_src = os.path.join(unlocker_src, "icon.icns")
+            if os.path.exists(icon_src):
+                resources_dir = os.path.join(app_path, "Contents", "Resources")
+                os.makedirs(resources_dir, exist_ok=True)
+                shutil.copy2(icon_src, os.path.join(resources_dir, "icon.icns"))
+                logger.log("Copied app icon")
 
             # Remove quarantine attribute (macOS Gatekeeper)
             try:
@@ -158,8 +267,8 @@ class UnlockerManager:
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
                 logger.log("Removed quarantine attributes")
-            except:
-                pass
+            except Exception as e:
+                logger.log(f"Could not remove quarantine: {e}", "WARNING")
 
             return True, (
                 "DLC Unlocker installed successfully!\n\n"
@@ -168,11 +277,15 @@ class UnlockerManager:
             )
 
         except Exception as e:
-            return False, str(e)
+            logger.log(f"Installation failed: {str(e)}", "ERROR")
+            return False, f"Installation failed: {str(e)}"
 
     @staticmethod
-    def update_sims4_config(logger):
-        """Update the Sims 4 config in the existing .app bundle."""
+    def update_sims4_config(logger, game_path=None):
+        """
+        Update the Sims 4 config in the existing .app bundle.
+        ИСПРАВЛЕНО: Теперь также добавляет путь к игре в конфиг.
+        """
         base_dir = UnlockerManager.get_base_path()
         unlocker_src = os.path.join(base_dir, "unlocker_mac", "files")
         
@@ -196,6 +309,18 @@ class UnlockerManager:
             if os.path.exists(override_src):
                 shutil.copy2(override_src, os.path.join(bundle_path, "anadius_override.cfg"))
                 logger.log("Updated override config")
+            
+            # ИСПРАВЛЕНО: Добавить путь к игре если предоставлен
+            if game_path:
+                try:
+                    # Если путь к .app, используем его
+                    if game_path.endswith(".app"):
+                        with open(dst_conf, 'a', encoding='utf-8') as f:
+                            f.write(f"\n[Game]\n")
+                            f.write(f"ExecutablePath={game_path}\n")
+                        logger.log(f"Added game path to config: {game_path}")
+                except Exception as e:
+                    logger.log(f"Could not add game path: {e}", "WARNING")
             
             return True, "Sims 4 Config updated successfully!"
         except Exception as e:
@@ -279,7 +404,16 @@ class UnlockerDialog(QDialog):
             QMessageBox.critical(self, "Error", msg)
 
     def update_config(self):
-        success, msg = UnlockerManager.update_sims4_config(self.parent_ui.logger)
+        # ИСПРАВЛЕНО: Получаем путь к игре из конфига и передаем в update_sims4_config
+        game_path = None
+        try:
+            from UnlockerLogic import ConfigManager
+            config = ConfigManager()
+            game_path = config.get("game_path")
+        except:
+            pass
+        
+        success, msg = UnlockerManager.update_sims4_config(self.parent_ui.logger, game_path)
         if success:
             QMessageBox.information(self, "Success", msg)
         else:
