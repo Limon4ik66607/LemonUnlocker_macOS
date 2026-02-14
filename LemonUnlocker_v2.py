@@ -714,6 +714,10 @@ class DownloadWorker(QObject):
                 # Cleanup
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
+            
+            # ИСПРАВЛЕНО: Обновить unlocker config после успешной установки
+            if success:
+                self._update_unlocker_config()
                 
             self.completed.emit(success)
         except Exception as e:
@@ -741,6 +745,77 @@ class DownloadWorker(QObject):
 
     def report_progress(self, p, d, t):
         self.progress.emit(p)
+
+    def _update_unlocker_config(self):
+        """
+        ИСПРАВЛЕНО: Обновляет anadius.cfg с путем к установленному DLC.
+        Это критически важно для работы DLC Unlocker на macOS.
+        """
+        try:
+            # Импортируем здесь чтобы избежать circular import
+            from UnlockerLogic import UnlockerManager
+            
+            app_path = UnlockerManager.get_unlocker_app_path()
+            config_path = os.path.join(app_path, "Contents", "MacOS", "anadius.cfg")
+            
+            # Если unlocker не установлен, пропускаем
+            if not os.path.exists(config_path):
+                return
+            
+            # Определяем путь к установленному DLC
+            dlc_path = os.path.join(self.game_path, self.dlc_id)
+            if not os.path.exists(dlc_path):
+                return
+            
+            # Читаем существующий конфиг
+            with open(config_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            # Ищем секцию [DLC_Paths] и добавляем/обновляем путь
+            dlc_line = f"{self.dlc_id}={dlc_path}\n"
+            in_section = False
+            new_lines = []
+            added = False
+            section_exists = False
+            
+            for line in lines:
+                if line.strip() == "[DLC_Paths]":
+                    section_exists = True
+                    in_section = True
+                    new_lines.append(line)
+                elif in_section and line.startswith(self.dlc_id):
+                    # Обновляем существующий путь
+                    new_lines.append(dlc_line)
+                    added = True
+                elif in_section and line.strip().startswith("["):
+                    # Новая секция начинается
+                    if not added:
+                        new_lines.append(dlc_line)
+                        added = True
+                    new_lines.append(line)
+                    in_section = False
+                else:
+                    new_lines.append(line)
+            
+            # Если в секции но не добавили до конца файла
+            if in_section and not added:
+                new_lines.append(dlc_line)
+                added = True
+            
+            # Если секции [DLC_Paths] не было, создаем
+            if not section_exists:
+                new_lines.append("\n[DLC_Paths]\n")
+                new_lines.append(dlc_line)
+            
+            # Записываем обратно
+            with open(config_path, 'w', encoding='utf-8') as f:
+                f.writelines(new_lines)
+            
+            print(f"✅ Updated unlocker config: {self.dlc_id} -> {dlc_path}")
+            
+        except Exception as e:
+            # Не критичная ошибка, просто логируем
+            print(f"⚠️  Could not update unlocker config: {e}")
 
 # --- UI COMPONENTS ---
 
