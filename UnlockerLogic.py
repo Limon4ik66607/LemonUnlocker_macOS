@@ -686,7 +686,6 @@ class UnlockerDialog(QDialog):
         # ИСПРАВЛЕНО: Получаем путь к игре из конфига и передаем в update_sims4_config
         game_path = None
         try:
-            # ConfigManager теперь определен в этом же файле
             config = ConfigManager()
             game_path = config.get("game_path")
         except:

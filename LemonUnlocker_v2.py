@@ -2363,6 +2363,12 @@ class UnlockerPage(QWidget):
         
         actions_layout.addWidget(self.btn_install)
         actions_layout.addWidget(self.btn_config)
+        
+        # 4. Create Launcher (Run Game)
+        self.btn_launcher = self.create_action_card("🎮", "Create Launcher", "#8B5CF6") # Purple
+        self.btn_launcher.clicked.connect(self.create_launcher)
+        actions_layout.addWidget(self.btn_launcher)
+        
         actions_layout.addWidget(self.btn_uninstall)
         
         layout.addLayout(actions_layout)
@@ -2497,15 +2503,46 @@ class UnlockerPage(QWidget):
             self.btn_logs.setChecked(True)
             self.parent_window.logger.widget = self.console
             
-            success, msg = UnlockerManager.update_sims4_config(self.parent_window.logger)
+            # Get game path from main config
+            game_path = self.parent_window.config.get("game_path")
+            
+            success, msg = UnlockerManager.update_sims4_config(self.parent_window.logger, game_path)
+            
             if success:
-                 self.parent_window.logger.log(msg, "SUCCESS")
-                 QMessageBox.information(self, Localization.get("success"), msg)
+                self.parent_window.logger.log(msg, "SUCCESS")
+                QMessageBox.information(self, Localization.get("success"), msg)
             else:
-                 self.parent_window.logger.log(msg, "ERROR")
-                 QMessageBox.critical(self, Localization.get("error"), msg)
+                self.parent_window.logger.log(msg, "ERROR")
+                QMessageBox.critical(self, Localization.get("error"), msg)
+                
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self, "Error", f"Failed to update config: {str(e)}")
+
+    def create_launcher(self):
+        try:
+            self.console.setVisible(True)
+            self.btn_logs.setChecked(True)
+            self.parent_window.logger.widget = self.console
+            
+            # Get game path from main config
+            game_path = self.parent_window.config.get("game_path")
+            
+            success, msg = UnlockerManager.create_game_launcher(self.parent_window.logger, game_path)
+            
+            if success:
+                self.parent_window.logger.log(msg, "SUCCESS")
+                QMessageBox.information(
+                    self, 
+                    "🎉 Launcher Created!", 
+                    msg,
+                    QMessageBox.StandardButton.Ok
+                )
+            else:
+                self.parent_window.logger.log(msg, "ERROR")
+                QMessageBox.critical(self, "Error", msg)
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to create launcher: {str(e)}")
 
     def uninstall_unlocker(self):
         # Use new method
