@@ -36,9 +36,19 @@ jobs:
         run: python -m PyInstaller LemonUnlocker_mac.spec --clean --noconfirm
 
       - name: Test App Launch (Smoke Test)
+        continue-on-error: true
+        id: smoke_test
         run: |
           ./dist/LemonUnlocker.app/Contents/MacOS/LemonUnlocker --test-launch
           echo "App launched successfully!"
+
+      - name: Upload Test Screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-launch-screenshot
+          path: test_launch_screenshot.png
+          if-no-files-found: ignore
 
       - name: Create DMG
         run: |

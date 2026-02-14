@@ -2697,17 +2697,37 @@ class LemonWindow(QMainWindow):
         self.sidebar.set_active(index)
 
 if __name__ == "__main__":
-    # ---------------------------------------------------------
-    # CI/CD SMOKE TEST
-    # ---------------------------------------------------------
-    if "--test-launch" in sys.argv:
-        print("LemonUnlocker: Startup check passed (imports OK).")
-        sys.exit(0)
-
     # Install crash handler
     CrashHandler.install()
     
     app = QApplication(sys.argv)
+    
+    # ---------------------------------------------------------
+    # CI/CD SMOKE TEST w/ SCREENSHOT
+    # ---------------------------------------------------------
+    if "--test-launch" in sys.argv:
+        try:
+            print("LemonUnlocker: Initializing window for smoke test...")
+            window = LemonWindow()
+            window.show()
+            
+            # Process events to ensure UI is rendered
+            app.processEvents()
+            
+            # Take screenshot
+            import os
+            screenshot_path = os.path.join(os.getcwd(), "test_launch_screenshot.png")
+            if window.grab().save(screenshot_path):
+                print(f"LemonUnlocker: Screenshot saved to {screenshot_path}")
+                print("LemonUnlocker: Startup check passed.")
+                sys.exit(0)
+            else:
+                print("LemonUnlocker: Failed to save screenshot.")
+                sys.exit(1)
+        except Exception as e:
+            print(f"LemonUnlocker: Smoke test failed: {e}")
+            sys.exit(1)
+
     window = LemonWindow()
     window.show()
     sys.exit(app.exec())
