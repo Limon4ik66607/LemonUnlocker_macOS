@@ -1,0 +1,15 @@
+# Exclude build artifacts
+build/
+dist/
+__pycache__/
+*.pyc
+check_arch.py
+
+# Local config/logs
+logs/
+config.json
+.DS_Store
+
+# Virtual environment (if any)
+venv/
+env/
