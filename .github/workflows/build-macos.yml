@@ -35,6 +35,11 @@ jobs:
       - name: Build with PyInstaller
         run: python -m PyInstaller LemonUnlocker_mac.spec --clean --noconfirm
 
+      - name: Test App Launch (Smoke Test)
+        run: |
+          ./dist/LemonUnlocker.app/Contents/MacOS/LemonUnlocker --test-launch
+          echo "App launched successfully!"
+
       - name: Create DMG
         run: |
           mkdir -p dmg_contents

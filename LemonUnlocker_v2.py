@@ -2697,6 +2697,13 @@ class LemonWindow(QMainWindow):
         self.sidebar.set_active(index)
 
 if __name__ == "__main__":
+    # ---------------------------------------------------------
+    # CI/CD SMOKE TEST
+    # ---------------------------------------------------------
+    if "--test-launch" in sys.argv:
+        print("LemonUnlocker: Startup check passed (imports OK).")
+        sys.exit(0)
+
     # Install crash handler
     CrashHandler.install()
     
