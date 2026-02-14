@@ -1,14 +1,21 @@
 name: Build macOS App
 
 on:
-  workflow_dispatch:  # Manual trigger from GitHub UI or CLI
+  workflow_dispatch:
   push:
     branches: [master]
 
 jobs:
   build-macos:
-    runs-on: macos-latest
-    
+    name: Build (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-13 is typically Intel (x86_64), macos-14 is Apple Silicon (arm64)
+        runner: [macos-13, macos-14]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,15 +36,38 @@ jobs:
       - name: Prepare bundled 7z
         run: |
           mkdir -p 7z
-          cp $(which 7za) 7z/7za
+          cp "$(which 7za)" 7z/7za
           chmod +x 7z/7za
 
       - name: Build with PyInstaller
         run: python -m PyInstaller LemonUnlocker_mac.spec --clean --noconfirm
 
+      - name: Detect build architecture
+        id: vars
+        run: |
+          echo "arch=$(uname -m)" >> "$GITHUB_OUTPUT"
+          echo "runner=${{ matrix.runner }}"
+
+      - name: Inspect bundled binaries (arch)
+        # This helps catch arm64/x86_64 mismatches early.
+        continue-on-error: true
+        run: |
+          echo "ARCH: $(uname -m)"
+          echo "---- Contents/MacOS ----"
+          ls -la ./dist/LemonUnlocker.app/Contents/MacOS || true
+          echo "---- file: main executable ----"
+          file ./dist/LemonUnlocker.app/Contents/MacOS/LemonUnlocker || true
+          echo "---- file: unlocker (if present) ----"
+          file ./dist/LemonUnlocker.app/Contents/MacOS/unlocker || true
+          echo "---- dylibs ----"
+          find ./dist/LemonUnlocker.app -name "*.dylib" -maxdepth 8 -print -exec file {} \; || true
+          echo "---- lipo info (best-effort) ----"
+          lipo -info ./dist/LemonUnlocker.app/Contents/MacOS/LemonUnlocker 2>/dev/null || true
+          lipo -info ./dist/LemonUnlocker.app/Contents/MacOS/unlocker 2>/dev/null || true
+          find ./dist/LemonUnlocker.app -name "*.dylib" -maxdepth 8 -print0 | xargs -0 -I{} sh -c 'lipo -info "{}" 2>/dev/null || true'
+
       - name: Test App Launch (Smoke Test)
         continue-on-error: true
-        id: smoke_test
         run: |
           ./dist/LemonUnlocker.app/Contents/MacOS/LemonUnlocker --test-launch
           echo "App launched successfully!"
@@ -46,27 +76,29 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-launch-screenshot
+          name: test-launch-screenshot-${{ matrix.runner }}-${{ steps.vars.outputs.arch }}
           path: test_launch_screenshot.png
           if-no-files-found: ignore
 
       - name: Create DMG
         run: |
+          ARCH="${{ steps.vars.outputs.arch }}"
           mkdir -p dmg_contents
+          rm -f "dmg_contents/Applications" || true
           cp -R dist/LemonUnlocker.app dmg_contents/
           ln -s /Applications dmg_contents/Applications
-          hdiutil create -volname "LemonUnlocker" -srcfolder dmg_contents -ov -format UDZO LemonUnlocker.dmg
+          hdiutil create -volname "LemonUnlocker" -srcfolder dmg_contents -ov -format UDZO "LemonUnlocker-${ARCH}.dmg"
 
       - name: Upload .app as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LemonUnlocker-macOS
+          name: LemonUnlocker-macOS-${{ matrix.runner }}-${{ steps.vars.outputs.arch }}
           path: dist/LemonUnlocker.app
           retention-days: 30
 
       - name: Upload DMG as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LemonUnlocker-macOS-DMG
-          path: LemonUnlocker.dmg
+          name: LemonUnlocker-macOS-DMG-${{ matrix.runner }}-${{ steps.vars.outputs.arch }}
+          path: LemonUnlocker-${{ steps.vars.outputs.arch }}.dmg
           retention-days: 30
