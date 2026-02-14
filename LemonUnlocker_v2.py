@@ -296,10 +296,11 @@ class GameDetector:
         home = os.path.expanduser("~")
         possible_paths = [
             "/Applications/The Sims 4.app",
+            "/Applications/EA Games/The Sims 4.app",
             os.path.join(home, "Applications", "The Sims 4.app"),
+            os.path.join(home, "Applications", "EA Games", "The Sims 4.app"),
             os.path.join(home, "Library", "Application Support", "Origin", "The Sims 4"),
             os.path.join(home, "Library", "Application Support", "Steam", "steamapps", "common", "The Sims 4"),
-            "/Applications/EA Games/The Sims 4",
         ]
 
         for path in possible_paths:
@@ -1220,9 +1221,26 @@ class DashboardPage(QWidget):
         frame.val_lbl = val_lbl 
         return frame
 
+    def _resolve_macos_path(self, path):
+        """
+        On macOS, if path is .app, we treat it as the install directory.
+        The user explicitly requested DLCs to be installed inside the app bundle.
+        """
+        return path
+
     def change_path(self):
-        folder = QFileDialog.getExistingDirectory(self, Localization.get("game_path"))
+        folder = None
+        if sys.platform == "darwin":
+            # macOS: Allow selecting .app using getOpenFileName
+            folder, _ = QFileDialog.getOpenFileName(self, Localization.get("game_path"), "", "The Sims 4 (*.app);;All Files (*)")
+            if not folder:
+                 # Fallback to directory selection
+                 folder = QFileDialog.getExistingDirectory(self, Localization.get("game_path"))
+        else:
+            folder = QFileDialog.getExistingDirectory(self, Localization.get("game_path"))
+            
         if folder:
+            folder = self._resolve_macos_path(folder)
             self.config.set("game_path", folder)
             self.config.save()
             self.check_stats()
@@ -1230,6 +1248,7 @@ class DashboardPage(QWidget):
     def auto_detect(self):
         path = GameDetector.find_game()
         if path:
+            path = self._resolve_macos_path(path)
             self.config.set("game_path", path)
             self.config.save()
             self.check_stats()
