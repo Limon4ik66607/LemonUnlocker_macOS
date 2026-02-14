@@ -1223,9 +1223,27 @@ class DashboardPage(QWidget):
 
     def _resolve_macos_path(self, path):
         """
-        On macOS, if path is .app, we treat it as the install directory.
-        The user explicitly requested DLCs to be installed inside the app bundle.
+        On macOS, if path is .app, ALWAYS use 'The Sims 4 Packs' folder next to it.
+        If it doesn't exist, try to create it.
         """
+        if sys.platform == "darwin" and path.endswith(".app"):
+            parent = os.path.dirname(path)
+            packs_dir = os.path.join(parent, "The Sims 4 Packs")
+            
+            if os.path.exists(packs_dir):
+                return packs_dir
+                
+            # Try to create if doesn't exist
+            try:
+                os.makedirs(packs_dir, exist_ok=True)
+                return packs_dir
+            except:
+                # Permission denied
+                QMessageBox.critical(self, "Access Denied", 
+                    f"Lemon Unlocker cannot create folder:\n{packs_dir}\n\n"
+                    "Please create 'The Sims 4 Packs' folder manually next to the game app or check permissions.")
+                return None # Return None strictly so it doesn't set a wrong path
+                
         return path
 
     def change_path(self):
