@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import time
 import shlex  # ИСПРАВЛЕНО: Добавлен для правильного экранирования команд
+import tempfile  # НОВОЕ: Для создания временных файлов в create_game_launcher
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
 from PyQt6.QtCore import Qt
 
@@ -48,6 +49,35 @@ class AdminElevator:
             return False
 
 
+# НОВОЕ: Легкий ConfigManager для чтения конфига в UnlockerLogic
+class ConfigManager:
+    """Lightweight config reader for accessing game path"""
+    def __init__(self):
+        # Определяем путь к конфигу (такой же как в основном приложении)
+        if sys.platform == "darwin":
+            base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "LemonUnlocker")
+        elif sys.platform == "win32":
+            base = os.path.join(os.getenv("APPDATA"), "LemonUnlocker")
+        else:
+            base = os.path.join(os.path.expanduser("~"), ".config", "LemonUnlocker")
+        
+        self.config_file = os.path.join(base, "config.json")
+        self.config = self.load()
+    
+    def load(self):
+        if os.path.exists(self.config_file):
+            try:
+                import json
+                with open(self.config_file, "r") as f:
+                    return json.load(f)
+            except:
+                pass
+        return {}
+    
+    def get(self, key, default=None):
+        return self.config.get(key, default)
+
+
 class UnlockerManager:
     """
     macOS Unlocker Manager.
@@ -69,26 +99,80 @@ class UnlockerManager:
 
     @staticmethod
     def get_unlocker_app_path():
-        """Return the path where we'll create the DLC Unlocker .app bundle."""
+        """
+        Return the path where we'll create the DLC Unlocker .app bundle.
+        
+        ИСПРАВЛЕНО: Приоритет установки:
+        1. /Applications/ (системная, видна всем) - ПРЕДПОЧТИТЕЛЬНО
+        2. ~/Applications/ (пользовательская) - FALLBACK
+        
+        Это решает проблему когда пользователи не могут найти DLC Unlocker,
+        так как он устанавливается в ~/Applications/ вместо видимой /Applications/
+        """
+        app_name = "DLC Unlocker - The Sims 4.app"
+        
+        # Приоритет 1: Системная папка /Applications/ (видна в Finder → Программы)
+        system_apps = "/Applications"
+        
+        # Проверка: есть ли права на запись?
+        if os.access(system_apps, os.W_OK):
+            print(f"✅ Installing to {system_apps} (system-wide)")
+            return os.path.join(system_apps, app_name)
+        
+        # Проверка: можем ли получить права через osascript?
+        try:
+            test_file = os.path.join(system_apps, ".lemon_test")
+            # Пытаемся создать тестовый файл с правами администратора
+            cmd = f'do shell script "touch \\"{test_file}\\"" with administrator privileges'
+            
+            result = subprocess.run(
+                ['osascript', '-e', cmd],
+                capture_output=True,
+                timeout=60,  # Даем 60 сек на ввод пароля
+                text=True
+            )
+            
+            if result.returncode == 0:
+                # Успешно получили права! Удаляем тестовый файл
+                try:
+                    subprocess.run(
+                        ['osascript', '-e', f'do shell script "rm \\"{test_file}\\"" with administrator privileges'],
+                        capture_output=True,
+                        timeout=5
+                    )
+                except:
+                    pass
+                
+                print(f"✅ Installing to {system_apps} (with admin rights)")
+                return os.path.join(system_apps, app_name)
+                
+        except subprocess.TimeoutExpired:
+            print("⚠️  User did not enter password, using fallback location")
+        except Exception as e:
+            print(f"⚠️  Could not get admin access: {e}")
+        
+        # Fallback: пользовательская папка ~/Applications/
         home = os.path.expanduser("~")
-        apps_dir = os.path.join(home, "Applications")
+        home_apps = os.path.join(home, "Applications")
         
         # ИСПРАВЛЕНО: Добавлена обработка ошибок создания директории
-        if not os.path.exists(apps_dir):
+        if not os.path.exists(home_apps):
             try:
-                os.makedirs(apps_dir, exist_ok=True)
+                os.makedirs(home_apps, exist_ok=True)
+                print(f"ℹ️  Created user Applications folder: {home_apps}")
             except Exception as e:
-                # Fallback to /Applications if user ~/Applications fails
-                apps_dir = "/Applications"
-                if not os.access(apps_dir, os.W_OK):
-                    raise PermissionError(
-                        "Cannot create unlocker app. No write access to:\n"
-                        f"- {os.path.join(home, 'Applications')}\n"
-                        f"- /Applications\n\n"
-                        "Please grant Full Disk Access to LemonUnlocker in System Preferences."
-                    )
+                # Если не можем создать нигде - это критическая ошибка
+                raise PermissionError(
+                    "Cannot create DLC Unlocker. No write access to:\n"
+                    f"- {system_apps} (system Applications)\n"
+                    f"- {home_apps} (user Applications)\n\n"
+                    "Please grant Full Disk Access to LemonUnlocker in:\n"
+                    "System Preferences → Security & Privacy → Privacy → Full Disk Access"
+                )
         
-        return os.path.join(apps_dir, "DLC Unlocker - The Sims 4.app")
+        print(f"⚠️  Installing to {home_apps} (user-only, less visible)")
+        print(f"ℹ️  To find: Finder → Go → Home → Applications")
+        return os.path.join(home_apps, app_name)
 
     @staticmethod
     def check_status():
@@ -270,10 +354,24 @@ class UnlockerManager:
             except Exception as e:
                 logger.log(f"Could not remove quarantine: {e}", "WARNING")
 
+            # ИСПРАВЛЕНО: Показываем где именно установлено
+            if app_path.startswith("/Applications/"):
+                location_msg = (
+                    "📍 Location: /Applications/\n"
+                    "   (Finder → Applications / Программы)\n"
+                )
+            else:
+                location_msg = (
+                    "📍 Location: ~/Applications/\n"
+                    "   (Finder → Go → Home → Applications)\n"
+                    "   or search 'DLC Unlocker' in Spotlight (⌘+Space)\n"
+                )
+
             return True, (
-                "DLC Unlocker installed successfully!\n\n"
-                "⚠️ IMPORTANT: You must run 'DLC Unlocker - The Sims 4' app\n"
-                "from ~/Applications BEFORE launching the game each time!"
+                "✅ DLC Unlocker installed successfully!\n\n"
+                f"{location_msg}\n"
+                "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\n"
+                "BEFORE launching the game each time!"
             )
 
         except Exception as e:
@@ -354,12 +452,169 @@ class UnlockerManager:
         except Exception as e:
             return False, f"Failed to uninstall: {str(e)}"
 
+    @staticmethod
+    def create_game_launcher(logger, game_path=None):
+        """
+        НОВОЕ: Создает удобный 1-click лаунчер для игры с DLC.
+        
+        Создает AppleScript приложение которое:
+        1. Запускает DLC Unlocker
+        2. Ждет 2-3 секунды
+        3. Автоматически запускает The Sims 4
+        
+        Пользователю нужно только запустить "Play Sims 4 with DLC.app"
+        """
+        
+        # Проверяем что DLC Unlocker установлен
+        unlocker_path = UnlockerManager.get_unlocker_app_path()
+        if not os.path.exists(unlocker_path):
+            return False, "DLC Unlocker not installed. Install it first."
+        
+        # Получаем путь к игре из конфига если не предоставлен
+        if not game_path:
+            try:
+                config = ConfigManager()
+                game_path = config.get("game_path")
+            except:
+                pass
+        
+        if not game_path or not os.path.exists(game_path):
+            return False, (
+                "Game path not set or invalid.\n\n"
+                "Please set the game path in Dashboard first."
+            )
+        
+        # Определяем где создать лаунчер (в той же папке где DLC Unlocker)
+        if unlocker_path.startswith("/Applications/"):
+            launcher_dir = "/Applications"
+        else:
+            launcher_dir = os.path.dirname(unlocker_path)
+        
+        launcher_name = "Play Sims 4 with DLC.app"
+        launcher_path = os.path.join(launcher_dir, launcher_name)
+        
+        logger.log(f"Creating game launcher at: {launcher_path}")
+        
+        # AppleScript который запускает сначала unlocker, потом игру
+        # Используем экранирование путей для безопасности
+        unlocker_escaped = unlocker_path.replace('"', '\\"')
+        game_escaped = game_path.replace('"', '\\"')
+        
+        applescript = f'''
+-- Sims 4 with DLC Launcher
+-- Created by Lemon Unlocker
+
+on run
+    try
+        -- Показать уведомление
+        display notification "Starting DLC Unlocker..." with title "Sims 4 Launcher"
+        
+        -- Запустить DLC Unlocker (в фоне)
+        do shell script "open -g \\"{unlocker_escaped}\\""
+        
+        -- Подождать чтобы unlocker инициализировался
+        delay 3
+        
+        -- Показать уведомление
+        display notification "Launching The Sims 4..." with title "Sims 4 Launcher"
+        
+        -- Запустить игру
+        do shell script "open \\"{game_escaped}\\""
+        
+        -- Успех!
+        delay 1
+        display notification "Game launched! Have fun! 🎮" with title "Sims 4 Launcher"
+        
+    on error errMsg
+        display dialog "Failed to launch game:" & return & errMsg buttons {{"OK"}} default button 1 with icon stop
+    end try
+end run
+'''
+        
+        try:
+            # Создать временный файл со скриптом
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.applescript', 
+                                            delete=False, encoding='utf-8') as f:
+                f.write(applescript)
+                script_file = f.name
+            
+            logger.log("Compiling AppleScript launcher...")
+            
+            # Скомпилировать в .app используя osacompile
+            result = subprocess.run(
+                ['osacompile', '-o', launcher_path, script_file],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            # Удалить временный файл
+            os.remove(script_file)
+            
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout or "Unknown error"
+                return False, f"Failed to compile launcher: {error_msg}"
+            
+            logger.log("Launcher compiled successfully")
+            
+            # Попробовать добавить иконку (опционально)
+            try:
+                base_dir = UnlockerManager.get_base_path()
+                icon_path = os.path.join(base_dir, "icon.png")
+                
+                if os.path.exists(icon_path):
+                    # Конвертировать PNG в ICNS и установить
+                    # (требует sips и iconutil, доступны на macOS)
+                    logger.log("Adding icon to launcher...")
+                    # Это опционально, пропускаем если не получится
+            except:
+                pass
+            
+            # Удалить quarantine
+            try:
+                subprocess.run(['xattr', '-rc', launcher_path],
+                             stdout=subprocess.DEVNULL, 
+                             stderr=subprocess.DEVNULL)
+                logger.log("Removed quarantine from launcher")
+            except:
+                pass
+            
+            # Определяем где именно создали
+            if launcher_path.startswith("/Applications/"):
+                location_info = (
+                    f"📍 Location: /Applications/\n"
+                    f"   (Finder → Applications / Программы)\n\n"
+                )
+            else:
+                location_info = (
+                    f"📍 Location: ~/Applications/\n"
+                    f"   (Finder → Go → Home → Applications)\n\n"
+                )
+            
+            return True, (
+                f"🚀 Game Launcher created successfully!\n\n"
+                f"{location_info}"
+                f"✨ Now you can launch 'Play Sims 4 with DLC' app\n"
+                f"   and it will automatically:\n"
+                f"   1. Start DLC Unlocker\n"
+                f"   2. Launch The Sims 4\n"
+                f"   3. All DLC will be activated!\n\n"
+                f"💡 Just ONE click to play!"
+            )
+            
+        except subprocess.TimeoutExpired:
+            return False, "Launcher creation timed out"
+        except Exception as e:
+            logger.log(f"Failed to create launcher: {str(e)}", "ERROR")
+            return False, f"Failed to create launcher: {str(e)}"
+
 
 class UnlockerDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("DLC Unlocker Manager")
-        self.setFixedSize(400, 280)
+        self.setFixedSize(450, 380)  # УВЕЛИЧЕНО для новой кнопки
         self.parent_ui = parent
         self.setup_ui()
         self.setStyleSheet(
@@ -368,11 +623,13 @@ class UnlockerDialog(QDialog):
             "QPushButton{background-color:#ffd700;color:black;border:none;"
             "padding:10px;font-weight:bold;border-radius:4px;}"
             "QPushButton:hover{background-color:#ffed4a;}"
+            "QPushButton.primary{background-color:#22C55E;color:white;}"
+            "QPushButton.primary:hover{background-color:#16A34A;}"
         )
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setSpacing(15)
+        layout.setSpacing(12)
 
         header = QLabel("Lemon Unlocker Manager (macOS)")
         header.setStyleSheet("font-size:16px;font-weight:bold;color:#ffd700;margin-bottom:10px;")
@@ -386,14 +643,36 @@ class UnlockerDialog(QDialog):
         btn_config = QPushButton("2. Update Sims 4 Config")
         btn_config.clicked.connect(self.update_config)
         layout.addWidget(btn_config)
+        
+        # НОВОЕ: Кнопка создания игрового лаунчера
+        btn_launcher = QPushButton("🚀 3. Create Game Launcher (1-Click Play!)")
+        btn_launcher.setProperty("class", "primary")
+        btn_launcher.setStyleSheet(
+            "QPushButton{"
+            "background-color:#22C55E;color:white;"
+            "border:none;padding:12px;font-weight:bold;"
+            "border-radius:6px;font-size:13px;"
+            "}"
+            "QPushButton:hover{background-color:#16A34A;}"
+        )
+        btn_launcher.clicked.connect(self.create_launcher)
+        layout.addWidget(btn_launcher)
+
+        # Разделитель
+        line = QLabel("─" * 50)
+        line.setStyleSheet("color:#444;font-size:8px;")
+        line.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(line)
 
         info = QLabel(
-            "Use Option 1 to create the DLC Unlocker app.\n"
-            "Use Option 2 to update configs after new DLCs.\n\n"
-            "⚠️ Run DLC Unlocker BEFORE launching the game!"
+            "Steps 1-2: Set up DLC Unlocker\n"
+            "Step 3: Create easy launcher (recommended!)\n\n"
+            "💡 With launcher: just 1 click to play!\n"
+            "Without launcher: run DLC Unlocker before each game session"
         )
-        info.setStyleSheet("color:#aaa;font-size:11px;text-align:center;")
+        info.setStyleSheet("color:#aaa;font-size:10px;text-align:center;line-height:1.4;")
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        info.setWordWrap(True)
         layout.addWidget(info)
 
     def install_unlocker(self):
@@ -407,7 +686,7 @@ class UnlockerDialog(QDialog):
         # ИСПРАВЛЕНО: Получаем путь к игре из конфига и передаем в update_sims4_config
         game_path = None
         try:
-            from UnlockerLogic import ConfigManager
+            # ConfigManager теперь определен в этом же файле
             config = ConfigManager()
             game_path = config.get("game_path")
         except:
@@ -416,5 +695,26 @@ class UnlockerDialog(QDialog):
         success, msg = UnlockerManager.update_sims4_config(self.parent_ui.logger, game_path)
         if success:
             QMessageBox.information(self, "Success", msg)
+        else:
+            QMessageBox.critical(self, "Error", msg)
+    
+    def create_launcher(self):
+        """НОВОЕ: Создать удобный лаунчер для игры"""
+        # Получаем путь к игре из конфига
+        game_path = None
+        try:
+            config = ConfigManager()
+            game_path = config.get("game_path")
+        except:
+            pass
+        
+        success, msg = UnlockerManager.create_game_launcher(self.parent_ui.logger, game_path)
+        if success:
+            QMessageBox.information(
+                self, 
+                "🎉 Launcher Created!", 
+                msg,
+                QMessageBox.StandardButton.Ok
+            )
         else:
             QMessageBox.critical(self, "Error", msg)

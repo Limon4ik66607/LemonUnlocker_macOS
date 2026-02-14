@@ -688,6 +688,9 @@ class DownloadWorker(QObject):
                 if success:
                     # Cleanup only on success
                     shutil.rmtree(temp_dir, ignore_errors=True)
+                    
+                    # ИСПРАВЛЕНО: Нормализовать структуру для multi-part тоже
+                    self._normalize_dlc_structure()
                 else:
                     error_detail = f"[{self.dlc_id}] Extraction failed: {msg}\nTemp files kept at: {temp_dir}"
                     self._log_error(error_detail)
@@ -714,6 +717,10 @@ class DownloadWorker(QObject):
                 # Cleanup
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
+            
+            # ИСПРАВЛЕНО: Нормализовать структуру папок (убрать delta/ и т.п.)
+            if success:
+                self._normalize_dlc_structure()
             
             # ИСПРАВЛЕНО: Обновить unlocker config после успешной установки
             if success:
@@ -816,6 +823,94 @@ class DownloadWorker(QObject):
         except Exception as e:
             # Не критичная ошибка, просто логируем
             print(f"⚠️  Could not update unlocker config: {e}")
+
+    def _normalize_dlc_structure(self):
+        """
+        ИСПРАВЛЕНО: Убирает лишние вложенные папки и нормализует структуру DLC.
+        Решает проблему когда архив содержит delta/SP81/ вместо прямо SP81/
+        
+        Примеры проблемных структур:
+        - SP81/delta/SP81/ → SP81/
+        - EP01/Data/EP01/ → EP01/
+        """
+        try:
+            dlc_path = os.path.join(self.game_path, self.dlc_id)
+            
+            if not os.path.exists(dlc_path):
+                return
+            
+            items = os.listdir(dlc_path)
+            
+            # Случай 1: Одна папка которая содержит папку с именем DLC
+            # Пример: SP81/delta/SP81/ → SP81/
+            if len(items) == 1 and os.path.isdir(os.path.join(dlc_path, items[0])):
+                inner_folder = os.path.join(dlc_path, items[0])
+                inner_items = os.listdir(inner_folder)
+                
+                # Если внутри только папка с именем DLC
+                if len(inner_items) == 1 and inner_items[0] == self.dlc_id:
+                    real_content = os.path.join(inner_folder, self.dlc_id)
+                    temp_dir = os.path.join(self.game_path, f"_temp_{self.dlc_id}")
+                    
+                    # Перемещаем настоящий контент
+                    shutil.move(real_content, temp_dir)
+                    shutil.rmtree(dlc_path)
+                    shutil.move(temp_dir, dlc_path)
+                    
+                    print(f"✅ Normalized {self.dlc_id}: removed '{items[0]}' wrapper")
+                    return
+            
+            # Случай 2: Одна папка с контентом DLC внутри
+            # Пример: SP81/SomeFolder/[Data, Delta, *.package]
+            if len(items) == 1 and os.path.isdir(os.path.join(dlc_path, items[0])):
+                inner_folder = os.path.join(dlc_path, items[0])
+                inner_items = os.listdir(inner_folder)
+                
+                # Проверка на DLC контент (игнорируем системные папки)
+                dlc_markers = ['.package', 'data', 'delta', '__installer', 
+                              'clientdelta', 'clientfull', 'game', 'simulation']
+                
+                has_dlc_content = any(
+                    item.lower().endswith('.package') or 
+                    item.lower() in dlc_markers or
+                    (os.path.isdir(os.path.join(inner_folder, item)) and 
+                     item.lower() in dlc_markers and
+                     item not in ['.', '..', '__MACOSX', '.DS_Store'])
+                    for item in inner_items
+                )
+                
+                if has_dlc_content and len(inner_items) > 0:
+                    print(f"📦 Flattening {self.dlc_id}/{items[0]}/ structure...")
+                    
+                    # Перемещаем все файлы на уровень выше
+                    for item in inner_items:
+                        if item in ['.', '..', '__MACOSX', '.DS_Store']:
+                            continue
+                            
+                        src = os.path.join(inner_folder, item)
+                        dst = os.path.join(dlc_path, item)
+                        
+                        # Удаляем если уже существует
+                        if os.path.exists(dst):
+                            if os.path.isdir(dst):
+                                shutil.rmtree(dst)
+                            else:
+                                os.remove(dst)
+                        
+                        shutil.move(src, dst)
+                    
+                    # Удаляем теперь пустую папку
+                    try:
+                        os.rmdir(inner_folder)
+                    except:
+                        # Может не быть пустой если остались скрытые файлы
+                        shutil.rmtree(inner_folder, ignore_errors=True)
+                    
+                    print(f"✅ Flattened structure for {self.dlc_id}")
+                    
+        except Exception as e:
+            # Не критично, просто логируем
+            print(f"⚠️  Could not normalize structure for {self.dlc_id}: {e}")
 
 # --- UI COMPONENTS ---
 
