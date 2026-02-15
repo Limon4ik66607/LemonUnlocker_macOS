@@ -63,7 +63,7 @@ app = BUNDLE(
     icon=None,  # TODO: convert icon.png to .icns for macOS
     bundle_identifier='com.lemon4elo.lemonunlocker',
     info_plist={
-        'CFBundleShortVersionString': '1.1.0',
+        'CFBundleShortVersionString': '1.1.1',
         'CFBundleName': 'Lemon Unlocker',
         'CFBundleDisplayName': 'Lemon Unlocker',
         'NSHighResolutionCapable': True,

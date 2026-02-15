@@ -24,7 +24,7 @@ from dlc_database import DLCDatabase
 from UnlockerLogic import UnlockerManager, AdminElevator, ConfigManager
 from IntegrityChecker import IntegrityManager, IntegrityWorker
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 GITHUB_REPO = "Limon4ik66607/LemonUnlocker" 
 
 
