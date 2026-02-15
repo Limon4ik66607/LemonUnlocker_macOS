@@ -77,6 +77,18 @@ class ConfigManager:
     def get(self, key, default=None):
         return self.config.get(key, default)
 
+    def set(self, key, value):
+        self.config[key] = value
+
+    def save(self):
+        try:
+            import json
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            with open(self.config_file, "w") as f:
+                json.dump(self.config, f, indent=4)
+        except Exception as e:
+            print(f"Failed to save config: {e}")
+
 
 class UnlockerManager:
     """

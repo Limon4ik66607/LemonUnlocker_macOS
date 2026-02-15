@@ -21,10 +21,265 @@ from PyQt6 import sip
 
 # Import logic from existing modules
 from dlc_database import DLCDatabase
-from UnlockerLogic import UnlockerManager, AdminElevator
+from UnlockerLogic import UnlockerManager, AdminElevator, ConfigManager
 from IntegrityChecker import IntegrityManager, IntegrityWorker
 
 APP_VERSION = "1.1.0"
+GITHUB_REPO = "Limon4ik66607/LemonUnlocker" 
+
+
+# --- THEME CONSTANTS ---
+COLOR_BG_DARK = "#0f172a"      # Deep Navy/Black
+COLOR_BG_LIGHT = "#1e293b"     # Lighter Navy/Gray
+COLOR_BG_CARD = "#334155"      # Even Lighter Navy (Buttons/Inputs)
+COLOR_ACCENT = "#FACC15"       # Neon Lemon Yellow
+COLOR_ACCENT_HOVER = "#EAB308" # Darker Lemon
+COLOR_TEXT_WHITE = "#FFFFFF"
+COLOR_TEXT_GRAY = "#94a3b8"
+COLOR_DANGER = "#EF4444"
+COLOR_SUCCESS = "#22C55E"
+
+STYLE_SHEET = f"""
+    QMainWindow {{
+        background-color: {COLOR_BG_DARK};
+        color: {COLOR_TEXT_WHITE};
+    }}
+    QWidget {{
+        font-family: 'SF Pro Display', 'Helvetica Neue', 'Arial', sans-serif;
+        font-size: 14px;
+        color: {COLOR_TEXT_WHITE};
+    }}
+    /* Scrollbar */
+    QScrollBar:vertical {{
+        border: none;
+        background: {COLOR_BG_DARK};
+        width: 10px;
+        margin: 0px;
+    }}
+    QScrollBar::handle:vertical {{
+        background: {COLOR_BG_CARD};
+        min-height: 20px;
+        border-radius: 5px;
+    }}
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+        height: 0px;
+    }}
+"""
+
+SCROLLBAR_STYLESHEET = f"""
+    QScrollBar:vertical {{
+        border: none;
+        background: transparent;
+        width: 8px;
+        margin: 0px;
+    }}
+    QScrollBar::handle:vertical {{
+        background: #475569;
+        min-height: 20px;
+        border-radius: 4px;
+    }}
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+        height: 0px;
+    }}
+"""
+
+# --- HELPERS ---
+
+class GameDetector:
+    @staticmethod
+    def find_game():
+        # Common locations for The Sims 4
+        common_paths = [
+            # macOS
+            "/Applications/The Sims 4.app",
+            os.path.expanduser("~/Applications/The Sims 4.app"),
+            # Windows (just in case)
+            r"C:\Program Files\EA Games\The Sims 4",
+            r"C:\Program Files (x86)\Origin Games\The Sims 4",
+            r"C:\Program Files\The Sims 4"
+        ]
+        
+        for p in common_paths:
+            if os.path.exists(p):
+                return p
+        return None
+
+class FileUtils:
+    @staticmethod
+    def get_folder_size(start_path):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(start_path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                # skip if it is symbolic link
+                if not os.path.islink(fp):
+                    total_size += os.path.getsize(fp)
+        return total_size
+
+    @staticmethod
+    def format_size(size):
+        # 2^10 = 1024
+        power = 2**10
+        n = 0
+        power_labels = {0 : '', 1: 'K', 2: 'M', 3: 'G', 4: 'T'}
+        while size > power:
+            size /= power
+            n += 1
+        return f"{size:.1f} {power_labels[n]}B"
+
+class Updater:
+    @staticmethod
+    def get_latest_news():
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                version = data.get("tag_name", "").replace("v", "")
+                body = data.get("body", "")
+                date_str = data.get("published_at", "")
+                # Format date YYYY-MM-DD
+                if date_str:
+                    date = date_str.split("T")[0]
+                else:
+                    date = ""
+                    
+                return version, body, date
+        except:
+            pass
+        return None, None, None
+
+    @staticmethod
+    def check_updates():
+        try:
+            url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                data = resp.json()
+                remote_ver = data.get("tag_name", "").replace("v", "")
+                
+                # Compare versions (simple string compare might fail for 1.10 vs 1.2)
+                # Use packaging.version
+                from packaging import version
+                if version.parse(remote_ver) > version.parse(APP_VERSION):
+                    # Get download url for .dmg (mac) or .exe (win)
+                    download_url = ""
+                    assets = data.get("assets", [])
+                    ext = ".dmg" if sys.platform == "darwin" else ".exe"
+                    
+                    for asset in assets:
+                        if asset.get("name", "").endswith(ext):
+                            download_url = asset.get("browser_download_url")
+                            break
+                            
+                    return True, remote_ver, download_url, data.get("body", "")
+                    
+        except Exception as e:
+            print(f"Update check failed: {e}")
+            
+        return False, None, None, None
+
+    @staticmethod
+    def download_update(url):
+        try:
+            if not url:
+                return False, "No download URL found"
+                
+            resp = requests.get(url, stream=True)
+            if resp.status_code != 200:
+                return False, f"HTTP {resp.status_code}"
+                
+            fname = url.split("/")[-1]
+            tmp_dir = tempfile.gettempdir()
+            save_path = os.path.join(tmp_dir, fname)
+            
+            with open(save_path, 'wb') as f:
+                for chunk in resp.iter_content(chunk_size=8192):
+                    f.write(chunk)
+                    
+            return True, save_path
+        except Exception as e:
+            return False, str(e)
+
+    @staticmethod
+    def apply_update(path):
+        # Open the installer/dmg
+        if sys.platform == "darwin":
+            subprocess.run(["open", path])
+        else:
+            os.startfile(path)
+        sys.exit(0)
+
+class CrashHandler:
+    @staticmethod
+    def install():
+        sys.excepthook = CrashHandler.handle_exception
+
+    @staticmethod
+    def handle_exception(exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+
+        err_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        print("CRITICAL ERROR:", err_msg)
+        
+        # Log to file
+        try:
+            log_dir = os.path.expanduser("~/Library/Logs/LemonUnlocker") if sys.platform == "darwin" else "logs"
+            os.makedirs(log_dir, exist_ok=True)
+            log_file = os.path.join(log_dir, f"crash_{int(time.time())}.log")
+            with open(log_file, "w") as f:
+                f.write(err_msg)
+        except:
+            pass
+            
+        # Show UI if possible
+        try:
+            app = QApplication.instance()
+            if app:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Icon.Critical)
+                msg.setText("Application Crashed")
+                msg.setInformativeText("A critical error occurred. Please report this to the developer.")
+                msg.setDetailedText(err_msg)
+                msg.exec()
+        except:
+            pass
+
+class ImprovedLogger(QObject):
+    log_signal = pyqtSignal(str, str) # msg, level
+
+    def __init__(self):
+        super().__init__()
+        self.widget = None # QTextEdit
+
+    def log(self, message, level="INFO"):
+        # Console output
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        print(f"[{timestamp}] [{level}] {message}")
+        
+        # GUI Output
+        if self.widget:
+            color = "#cbd5e1" # Default
+            if level == "ERROR": color = "#ef4444"
+            elif level == "SUCCESS": color = "#22c55e"
+            elif level == "WARNING": color = "#facc15"
+            
+            html = f"<span style='color: #64748b'>[{timestamp}]</span> <span style='color: {color}'>{message}</span>"
+            QTimer.singleShot(0, lambda: self.widget.append(html))
+
+# --- UI CLASSES ---
+
+# ... (Sidebar, DashboardPage, DLCListPage, UnlockerPage, SettingsPage, HelpPage classes omitted for brevity) ...
+# I will supply the content for LemonWindow.__init__ here.
+# But wait, replace_file_content replaces a block.
+# The user already provided the file content in prev turns.
+# I need to match the block exactly.
+# The range I selected (1-3171) is HUGE. I should only replace import lines and the __init__ method of LemonWindow.
+
+# Let's do it in 2 steps or just use multi_replace.
+pass
 GITHUB_REPO = "Limon4ik66607/LemonUnlocker" 
 
 
@@ -398,7 +653,7 @@ LANG_EN = {
     "help_launcher_title": "Option 1: Automatic Launcher (Recommended)",
     "help_launcher_steps": "1. Go to 'Unlocker' tab.\n2. Click 'Create Game Launcher'.\n3. An app 'Play Sims 4 with DLC' will be created in your Applications folder.\n4. Just run that app to play! It handles everything for you.",
     "help_manual_title": "Option 2: Manual Launch",
-    "help_manual_steps": "1. Open Lemon Unlocker.\n2. Make sure Unlocker status is 'Installed'.\n3. DO NOT CLOSE Lemon Unlocker.\n4. Open The Sims 4 normally (via EA App/Origin).\n5. Enjoy your DLCs!\n\nNote: You must keep Lemon Unlocker open while playing.",
+    "help_manual_steps": "1. Open DLC Unlocker - The Sims 4.app.\n2. Make sure Unlocker status is 'Installed'.\n3. DO NOT CLOSE DLC Unlocker - The Sims 4.app.\n4. Open The Sims 4 normally (via EA App/Origin).\n5. Enjoy your DLCs!\n\nNote: You must keep DLC Unlocker - The Sims 4.app open while playing.",
     "help_footer": "Need more help? Join our Telegram channel!",
     # Dialogs & Updates
     "download_error_title": "Download Error",
@@ -431,7 +686,28 @@ LANG_EN = {
     "install_success": "✅ DLC Unlocker installed successfully!",
     "location_app": "📍 Location: /Applications/\n   (Finder → Applications)",
     "location_user": "📍 Location: ~/Applications/\n   (Finder → Go → Home → Applications)\n   or search 'DLC Unlocker' in Spotlight (⌘+Space)",
-    "important_note": "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\nBEFORE launching the game each time!"
+    "important_note": "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\nBEFORE launching the game each time!",
+    # Delete Confirmation Dialog
+    "delete_confirm_title": "Confirm",
+    "delete_confirm_msg": "Delete {} DLCs?",
+    "delete_yes": "Yes",
+    "delete_no": "No",
+    "delete_cancel": "Cancel",
+    "delete_done_title": "Done",
+    "delete_done_msg": "Deleted {} DLCs.",
+    "uninstall_selected": "Uninstall Selected",
+    "no_game_path_title": "No Game Path",
+    "no_game_path_msg": "Please select your game folder in the Dashboard first.",
+    "not_set": "Not Set",
+    "no_updates_available": "No updates available.",
+    "admin_required_title": "Admin Required",
+    "admin_required_msg": "Your game folder requires Administrator privileges.\nPlease restart DLC Unlocker - The Sims 4.app as Administrator.",
+    "selected_count": "{} selected",
+    "refresh": "Refresh",
+    "launch_game": "🎮 Launch Game",
+    "launch_game_tooltip": "Launch The Sims 4 with DLC via created launcher",
+    "launcher_not_found": "Launcher not found. Please create it first.",
+    "game_launching": "Launching game..."
 }
 
 LANG_RU = {
@@ -497,7 +773,8 @@ LANG_RU = {
     "help_launcher_title": "Вариант 1: Автоматический Лаунчер (Рекомендуем! 💖)",
     "help_launcher_steps": "1. Перейдите во вкладку 'Анлокер'.\n2. Нажмите кнопку 'Создать Лаунчер'.\n3. В ваших Программах появится 'Play Sims 4 with DLC'.\n4. Просто запускайте это приложение, чтобы играть!\n   Оно само запустит всё, что нужно.",
     "help_manual_title": "Вариант 2: Запуск вручную",
-    "help_manual_steps": "1. Откройте Lemon Unlocker.\n2. Убедитесь, что статус Анлокера - 'Установлен'.\n3. НЕ ЗАКРЫВАЙТЕ Lemon Unlocker.\n4. Запустите The Sims 4 как обычно (через EA App/Origin).\n5. Играйте с DLC!\n\nВажно: Программа должна быть открыта, пока вы играете.",
+    "help_manual_steps": "1. Откройте DLC Unlocker - The Sims 4.app.\n2. Убедитесь, что статус Анлокера - 'Установлен'.\n3. НЕ ЗАКРЫВАЙТЕ DLC Unlocker - The Sims 4.app.\n4. Запустите The Sims 4 как обычно (через EA App/Origin).\n5. Играйте с DLC!\n\nВажно: Программа должна быть открыта, пока вы играете.",
+    "help_manual_steps": "1. Убедитесь, что статус Анлокера - 'Установлен'.\n2. Откройте DLC Unlocker - The Sims 4.app.\n3. НЕ ЗАКРЫВАЙТЕ DLC Unlocker - The Sims 4.app.\n4. Запустите The Sims 4 как обычно (через EA App/Origin).\n5. Играйте с DLC!\n\nВажно: Программа должна быть открыта, пока вы играете.",
     "help_footer": "Нужна помощь? Заходите в наш Telegram канал!",
     # Dialogs & Updates
     "download_error_title": "Ошибка загрузки",
@@ -530,7 +807,28 @@ LANG_RU = {
     "install_success": "✅ Анлокер установлен успешно!",
     "location_app": "📍 Расположение: /Applications/\n   (Finder → Программы)",
     "location_user": "📍 Расположение: ~/Applications/\n   (Finder → Переход → Домой → Программы)\n   или поиск 'DLC Unlocker' в Spotlight (⌘+Пробел)",
-    "important_note": "⚠️ ВАЖНО: Запускайте 'DLC Unlocker - The Sims 4'\nПЕРЕД каждым запуском игры!"
+    "important_note": "⚠️ ВАЖНО: Запускайте 'DLC Unlocker - The Sims 4'\nПЕРЕД каждым запуском игры!",
+    # Delete Confirmation Dialog
+    "delete_confirm_title": "Подтверждение",
+    "delete_confirm_msg": "Удалить {} DLC?",
+    "delete_yes": "Да",
+    "delete_no": "Нет",
+    "delete_cancel": "Отмена",
+    "delete_done_title": "Готово",
+    "delete_done_msg": "Удалено {} DLC.",
+    "uninstall_selected": "Удалить выбранное",
+    "no_game_path_title": "Не указан путь к игре",
+    "no_game_path_msg": "Пожалуйста, сначала выберите папку с игрой на вкладке Главная.",
+    "not_set": "Не указан",
+    "no_updates_available": "Нет доступных обновлений.",
+    "admin_required_title": "Требуются права администратора",
+    "admin_required_msg": "Папка игры требует прав администратора.\nПожалуйста, перезапустите DLC Unlocker - The Sims 4.app с правами администратора.",
+    "selected_count": "Выбрано: {}",
+    "refresh": "Обновить",
+    "launch_game": "🎮 Запустить игру",
+    "launch_game_tooltip": "Запустить The Sims 4 с DLC через созданный лаунчер",
+    "launcher_not_found": "Лаунчер не найден. Сначала создайте его.",
+    "game_launching": "Запуск игры..."
 }
 
 class Localization:
@@ -1305,7 +1603,7 @@ class DashboardPage(QWidget):
         path_info = QVBoxLayout()
         lbl_path_title = QLabel(Localization.get("game_path"))
         lbl_path_title.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 12px; font-weight: 600;")
-        self.lbl_path_val = QLabel("Not Set")
+        self.lbl_path_val = QLabel(Localization.get("not_set"))
         self.lbl_path_val.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 15px; font-weight: 500;")
         self.lbl_path_val.setWordWrap(True)
         path_info.addWidget(lbl_path_title)
@@ -1468,7 +1766,7 @@ class DashboardPage(QWidget):
                 full_html = header_html + body_html
                 self.lbl_news_content.setText(full_html)
             else:
-                self.lbl_news_content.setText("No updates available.")
+                self.lbl_news_content.setText(Localization.get("no_updates_available"))
         except Exception as e:
              # self.lbl_news_content.setText(f"Failed to load news: {e}") 
              # Keep it clean
@@ -1599,7 +1897,7 @@ class DashboardPage(QWidget):
                 self.parent_window.catalog_page.populate()
                 
         else:
-            self.lbl_path_val.setText("Not Set")
+            self.lbl_path_val.setText(Localization.get("not_set"))
             self.stats_card.val_lbl.setText("0 / 0")
             self.size_card.val_lbl.setText("0 B")
 
@@ -1660,6 +1958,27 @@ class DLCListPage(QWidget):
              self.btn_verify.clicked.connect(self.verify_files)
              header_row.addWidget(self.btn_verify)
              header_row.addSpacing(10)
+        
+        # Refresh Button (both Library and Catalog)
+        self.btn_refresh = QPushButton("🔄  " + Localization.get("refresh"))
+        self.btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_refresh.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLOR_BG_CARD};
+                color: {COLOR_ACCENT};
+                border-radius: 8px;
+                padding: 6px 12px;
+                font-weight: 600;
+                border: 1px solid transparent;
+            }}
+            QPushButton:hover {{
+                border: 1px solid {COLOR_ACCENT};
+                background-color: {COLOR_ACCENT}15;
+            }}
+        """)
+        self.btn_refresh.clicked.connect(self.refresh_list)
+        header_row.addWidget(self.btn_refresh)
+        header_row.addSpacing(10)
         
         # Integrity Manager
         config = ConfigManager()
@@ -1746,7 +2065,7 @@ class DLCListPage(QWidget):
         action_layout = QHBoxLayout(self.action_bar)
         action_layout.setContentsMargins(20, 10, 20, 10)
         
-        self.lbl_selected_count = QLabel("0 selected")
+        self.lbl_selected_count = QLabel(Localization.get("selected_count").format(0))
         self.lbl_selected_count.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-weight: bold; font-size: 14px;")
         
         btn_action = QPushButton()
@@ -1757,11 +2076,11 @@ class DLCListPage(QWidget):
             btn_action.clicked.connect(self.batch_download)
         else:
             # Uninstall logic not fully implemented yet, maybe just Hide/Remove
-            btn_action.setText("Uninstall Selected") 
+            btn_action.setText(Localization.get("uninstall_selected")) 
             btn_action.setStyleSheet(f"background-color: {COLOR_DANGER}; color: white; border-radius: 6px; padding: 6px 16px; font-weight: bold;")
             btn_action.clicked.connect(self.batch_uninstall)
             
-        btn_cancel = QPushButton("Cancel")
+        btn_cancel = QPushButton(Localization.get("delete_cancel"))
         btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_cancel.setStyleSheet(f"background-color: transparent; color: {COLOR_TEXT_GRAY}; border: 1px solid {COLOR_TEXT_GRAY}; border-radius: 6px; padding: 6px 12px;")
         btn_cancel.clicked.connect(self.clear_selection)
@@ -2136,7 +2455,7 @@ class DLCListPage(QWidget):
     def update_action_bar(self):
         count = len(self.selected_items)
         if count > 0:
-            self.lbl_selected_count.setText(f"{count} selected")
+            self.lbl_selected_count.setText(Localization.get("selected_count").format(count))
             self.action_bar.show()
         else:
             self.action_bar.hide()
@@ -2202,7 +2521,7 @@ class DLCListPage(QWidget):
         self.download_dlc(dlc_id, info, target_btn)
              
     def start_uninstall(self, dlc_ids):
-        reply = QMessageBox.question(self, "Confirm", f"Delete {len(dlc_ids)} DLCs?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        reply = QMessageBox.question(self, Localization.get("delete_confirm_title"), Localization.get("delete_confirm_msg").format(len(dlc_ids)), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             config = ConfigManager()
             game_path = config.get("game_path")
@@ -2223,7 +2542,7 @@ class DLCListPage(QWidget):
             if hasattr(self.parent_window, 'dashboard_page'):
                 self.parent_window.dashboard_page.check_stats()
             
-            QMessageBox.information(self, "Done", f"Deleted {success_count} DLCs.")
+            QMessageBox.information(self, Localization.get("delete_done_title"), Localization.get("delete_done_msg").format(success_count))
 
     def filter_list(self, text):
         self.apply_filters()
@@ -2233,13 +2552,13 @@ class DLCListPage(QWidget):
         config = ConfigManager()
         game_path = config.get("game_path")
         if not game_path or not os.path.exists(game_path):
-            QMessageBox.warning(self, "No Game Path", "Please select your game folder in the Dashboard first.")
+            QMessageBox.warning(self, Localization.get("no_game_path_title"), Localization.get("no_game_path_msg"))
             self.parent_window.switch_page(0)
             return
 
         # Check admin
         if AdminElevator.requires_admin(game_path) and not AdminElevator.is_admin():
-            QMessageBox.warning(self, "Admin Required", "Your game folder requires Administrator privileges.\nPlease restart Lemon Unlocker as Administrator.")
+            QMessageBox.warning(self, Localization.get("admin_required_title"), Localization.get("admin_required_msg"))
             return
 
         # Start download
@@ -2391,6 +2710,27 @@ class DLCListPage(QWidget):
         self.parent_window.catalog_page.populate()
         self.parent_window.dashboard_page.check_stats()
 
+    def refresh_list(self):
+        """Manual refresh - re-scans the game folder and repopulates the list."""
+        self.btn_refresh.setEnabled(False)
+        self.btn_refresh.setText("🔄  ...")
+        
+        # Use a short timer so the UI updates before blocking scan
+        QTimer.singleShot(50, self._do_refresh)
+    
+    def _do_refresh(self):
+        try:
+            self.populate()
+            # Also refresh the other page and dashboard
+            if self.mode == "installed":
+                self.parent_window.catalog_page.populate()
+            else:
+                self.parent_window.library_page.populate()
+            self.parent_window.dashboard_page.check_stats()
+        finally:
+            self.btn_refresh.setEnabled(True)
+            self.btn_refresh.setText("🔄  " + Localization.get("refresh"))
+
 class UnlockerPage(QWidget):
     def __init__(self, parent_window):
         super().__init__()
@@ -2469,6 +2809,35 @@ class UnlockerPage(QWidget):
         
         layout.addLayout(actions_layout)
         
+        # Launch Game Button (shown when launcher exists)
+        self.btn_launch_game = QPushButton(Localization.get("launch_game"))
+        self.btn_launch_game.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_launch_game.setFixedHeight(55)
+        self.btn_launch_game.setToolTip(Localization.get("launch_game_tooltip"))
+        self.btn_launch_game.setStyleSheet(f"""
+            QPushButton {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #8B5CF6, stop:1 #6366F1);
+                color: white;
+                border-radius: 14px;
+                font-size: 18px;
+                font-weight: 800;
+                border: none;
+                letter-spacing: 1px;
+            }}
+            QPushButton:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #A78BFA, stop:1 #818CF8);
+            }}
+            QPushButton:pressed {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #7C3AED, stop:1 #4F46E5);
+            }}
+        """)
+        self.btn_launch_game.clicked.connect(self.launch_game)
+        self.btn_launch_game.hide()  # Hidden by default, shown in update_status
+        layout.addWidget(self.btn_launch_game)
+        
         # Info text
         info_lbl = QLabel(Localization.get("unlocker_info"))
         info_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -2525,6 +2894,10 @@ class UnlockerPage(QWidget):
             self.btn_launcher.setVisible(True)
             self.btn_uninstall.setVisible(True)
             
+            # Check if game launcher exists → show Launch Game button
+            launcher_exists = self._check_launcher_exists()
+            self.btn_launch_game.setVisible(launcher_exists)
+            
             # Make Launcher button big and glowing
             self.btn_launcher.setStyleSheet(f"""
                 QPushButton {{
@@ -2556,6 +2929,7 @@ class UnlockerPage(QWidget):
             self.btn_install.setVisible(True)
             self.btn_launcher.setVisible(False)
             self.btn_uninstall.setVisible(False)
+            self.btn_launch_game.setVisible(False)
             
             # Make Install button big
             self.btn_install.setStyleSheet(f"""
@@ -2699,12 +3073,64 @@ class UnlockerPage(QWidget):
                     msg,
                     QMessageBox.StandardButton.Ok
                 )
+                # Refresh status to show Launch Game button
+                self.update_status()
             else:
                 self.parent_window.logger.log(msg, "ERROR")
                 QMessageBox.critical(self, "Error", msg)
                 
         except Exception as e:
             QMessageBox.critical(self, Localization.get("error"), f"{Localization.get('launcher_error')} {str(e)}")
+
+    def _check_launcher_exists(self):
+        """Check if the game launcher .app exists."""
+        unlocker_path = UnlockerManager.get_unlocker_app_path()
+        if unlocker_path.startswith("/Applications/"):
+            launcher_dir = "/Applications"
+        else:
+            launcher_dir = os.path.dirname(unlocker_path)
+        
+        launcher_path = os.path.join(launcher_dir, "Play Sims 4 with DLC.app")
+        return os.path.exists(launcher_path)
+    
+    def _get_launcher_path(self):
+        """Get the full path to the game launcher .app."""
+        unlocker_path = UnlockerManager.get_unlocker_app_path()
+        if unlocker_path.startswith("/Applications/"):
+            launcher_dir = "/Applications"
+        else:
+            launcher_dir = os.path.dirname(unlocker_path)
+        return os.path.join(launcher_dir, "Play Sims 4 with DLC.app")
+
+    def launch_game(self):
+        """Launch the game via the created launcher app."""
+        launcher_path = self._get_launcher_path()
+        
+        if not os.path.exists(launcher_path):
+            QMessageBox.warning(self, Localization.get("error"), Localization.get("launcher_not_found"))
+            return
+        
+        try:
+            self.btn_launch_game.setEnabled(False)
+            self.btn_launch_game.setText(Localization.get("game_launching"))
+            
+            # Open the launcher app
+            subprocess.Popen(['open', launcher_path])
+            
+            self.parent_window.logger.widget = self.console
+            self.parent_window.logger.log(f"Launched game via: {launcher_path}", "SUCCESS")
+            
+            # Re-enable button after a short delay
+            QTimer.singleShot(3000, lambda: self._reset_launch_button())
+            
+        except Exception as e:
+            self.btn_launch_game.setEnabled(True)
+            self.btn_launch_game.setText(Localization.get("launch_game"))
+            QMessageBox.critical(self, Localization.get("error"), f"{Localization.get('launcher_error')} {str(e)}")
+    
+    def _reset_launch_button(self):
+        self.btn_launch_game.setEnabled(True)
+        self.btn_launch_game.setText(Localization.get("launch_game"))
 
     def uninstall_unlocker(self):
         # Use new method
@@ -3166,6 +3592,9 @@ class SettingsPage(QWidget):
 class LemonWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        # Initialize Config
+        self.config = ConfigManager()
+        
         # macOS: use native title bar instead of FramelessWindowHint
         self.setWindowTitle("Lemon Unlocker")
         self.resize(1000, 700)
