@@ -2915,6 +2915,9 @@ class LemonWindow(QMainWindow):
         if os.path.exists(icon_path):
              self.setWindowIcon(QIcon(icon_path))
         
+        # Initialize Config
+        self.config = ConfigManager()
+        
         self.central_widget = QWidget()
         self.central_widget.setObjectName("Central")
         self.setCentralWidget(self.central_widget)
