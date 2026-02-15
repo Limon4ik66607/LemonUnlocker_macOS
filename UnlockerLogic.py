@@ -483,6 +483,21 @@ class UnlockerManager:
                 "Game path not set or invalid.\n\n"
                 "Please set the game path in Dashboard first."
             )
+
+        # ИСПРАВЛЕНО: Если game_path указывает на папку с паками, пытаемся найти саму игру
+        if sys.platform == "darwin" and game_path.endswith("The Sims 4 Packs"):
+            # Предполагаем, что .app лежит рядом
+            parent_dir = os.path.dirname(game_path)
+            potential_app = os.path.join(parent_dir, "The Sims 4.app")
+            if os.path.exists(potential_app):
+                 print(f"ℹ️  Found game app at: {potential_app}")
+                 game_path = potential_app
+            else:
+                 # Попробуем поискать в стандартном месте если рядом нет
+                 std_app = "/Applications/The Sims 4.app"
+                 if os.path.exists(std_app):
+                      game_path = std_app
+
         
         # Определяем где создать лаунчер (в той же папке где DLC Unlocker)
         if unlocker_path.startswith("/Applications/"):
