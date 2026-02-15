@@ -60,10 +60,10 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='LemonUnlocker.app',
-    icon=None,  # TODO: convert icon.png to .icns for macOS
+    icon='icon.icns',
     bundle_identifier='com.lemon4elo.lemonunlocker',
     info_plist={
-        'CFBundleShortVersionString': '1.1.1',
+        'CFBundleShortVersionString': '1.1.2',
         'CFBundleName': 'Lemon Unlocker',
         'CFBundleDisplayName': 'Lemon Unlocker',
         'NSHighResolutionCapable': True,
