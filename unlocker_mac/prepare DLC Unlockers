@@ -6,6 +6,32 @@ pushd "$(dirname "$0")"
 xattr -rc .
 printf "\n\n"
 
+echo "--- DIAGNOSTIC START ---"
+ls -l files/unlocker files/anadius.dylib
+file files/unlocker
+file files/anadius.dylib
+
+ARCH_Check=0
+if command -v lipo &> /dev/null; then
+    echo "Lipo info:"
+    lipo -info files/unlocker
+    lipo -info files/anadius.dylib
+    
+    # Check explicitly for x86_64
+    if lipo -info files/unlocker | grep -q "x86_64" && lipo -info files/anadius.dylib | grep -q "x86_64"; then
+        echo "✅ CHECK RESULT: Both files support x86_64 (GOOD)"
+    else
+        echo "❌ CHECK RESULT: One or both files MISSING x86_64 architecture!"
+        if ! lipo -info files/anadius.dylib | grep -q "x86_64"; then
+             echo "   -> anadius.dylib is missing x86_64 (Likely the cause of your crash)"
+        fi
+    fi
+else
+    echo "lipo not found, cannot verify architectures automatically."
+fi
+echo "--- DIAGNOSTIC END ---"
+printf "\n"
+
 ss2=0
 
 ss=0

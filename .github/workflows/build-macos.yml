@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         # macos-13 is typically Intel (x86_64), macos-14 is Apple Silicon (arm64)
-        runner: [macos-12, macos-14]
+        runner: [macos-13, macos-14]
 
     steps:
       - name: Checkout repository
@@ -65,6 +65,26 @@ jobs:
           lipo -info ./dist/LemonUnlocker.app/Contents/MacOS/LemonUnlocker 2>/dev/null || true
           lipo -info ./dist/LemonUnlocker.app/Contents/MacOS/unlocker 2>/dev/null || true
           find ./dist/LemonUnlocker.app -name "*.dylib" -maxdepth 8 -print0 | xargs -0 -I{} sh -c 'lipo -info "{}" 2>/dev/null || true'
+          
+          echo "---- STRICT CHECK: Ensuring anadius.dylib has x86_64 ----"
+          # Find the dylib inside the app bundle (it's in unlocker_mac/files/ inside the app)
+          ANADIUS_DYLIB=$(find ./dist/LemonUnlocker.app -name "anadius.dylib" | head -n 1)
+          if [ -z "$ANADIUS_DYLIB" ]; then
+            echo "❌ ERROR: anadius.dylib not found in app bundle!"
+            exit 1
+          fi
+          
+          echo "Found: $ANADIUS_DYLIB"
+          LIPO_OUT=$(lipo -info "$ANADIUS_DYLIB")
+          echo "Lipo info: $LIPO_OUT"
+          
+          if echo "$LIPO_OUT" | grep -q "x86_64"; then
+            echo "✅ SUCCESS: anadius.dylib contains x86_64 architecture."
+          else
+            echo "❌ CRITICAL FAILURE: anadius.dylib is MISSING x86_64 architecture!"
+            echo "This will cause a crash on macOS. Failing build to prevent bad release."
+            exit 1
+          fi
 
       - name: Test App Launch (Smoke Test)
         continue-on-error: true
