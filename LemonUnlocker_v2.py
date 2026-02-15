@@ -426,7 +426,12 @@ LANG_EN = {
     # Unlocker Tab Buttons
     "create_launcher_btn": "2. Create Game Launcher",
     "install_btn": "1. Install Unlocker",
-    "uninstall_btn": "3. Uninstall"
+    "uninstall_btn": "3. Uninstall",
+    # Install Success Messages
+    "install_success": "✅ DLC Unlocker installed successfully!",
+    "location_app": "📍 Location: /Applications/\n   (Finder → Applications)",
+    "location_user": "📍 Location: ~/Applications/\n   (Finder → Go → Home → Applications)\n   or search 'DLC Unlocker' in Spotlight (⌘+Space)",
+    "important_note": "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\nBEFORE launching the game each time!"
 }
 
 LANG_RU = {
@@ -520,7 +525,12 @@ LANG_RU = {
     # Unlocker Tab Buttons
     "create_launcher_btn": "2. Создать Лаунчер",
     "install_btn": "1. Установить Анлокер",
-    "uninstall_btn": "3. Удалить"
+    "uninstall_btn": "3. Удалить",
+    # Install Success Messages
+    "install_success": "✅ Анлокер установлен успешно!",
+    "location_app": "📍 Расположение: /Applications/\n   (Finder → Программы)",
+    "location_user": "📍 Расположение: ~/Applications/\n   (Finder → Переход → Домой → Программы)\n   или поиск 'DLC Unlocker' в Spotlight (⌘+Пробел)",
+    "important_note": "⚠️ ВАЖНО: Запускайте 'DLC Unlocker - The Sims 4'\nПЕРЕД каждым запуском игры!"
 }
 
 class Localization:
@@ -2605,7 +2615,15 @@ class UnlockerPage(QWidget):
             self.parent_window.logger.widget = self.console # Redirect logs
             self.parent_window.logger.log("Starting installation...", "INFO")
 
-            success, msg = UnlockerManager.install_ea_unlocker(self.parent_window.logger)
+            # Localized strings for the installer logic
+            loc_strings = {
+                "install_success": Localization.get("install_success"),
+                "location_app": Localization.get("location_app"),
+                "location_user": Localization.get("location_user"),
+                "important_note": Localization.get("important_note")
+            }
+
+            success, msg = UnlockerManager.install_ea_unlocker(self.parent_window.logger, loc_strings)
             
             if success:
                 self.parent_window.logger.log(msg, "SUCCESS")

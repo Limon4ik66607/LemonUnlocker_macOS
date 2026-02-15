@@ -182,11 +182,21 @@ class UnlockerManager:
         return os.path.exists(unlocker_bin)
 
     @staticmethod
-    def install_ea_unlocker(logger):
+    @staticmethod
+    def install_ea_unlocker(logger, loc_strings=None):
         """
         Create the DLC Unlocker .app bundle for The Sims 4.
         This replicates what 'prepare DLC Unlockers' bash script does.
         """
+        # Default strings if not provided
+        if not loc_strings:
+            loc_strings = {
+                "install_success": "✅ DLC Unlocker installed successfully!",
+                "location_app": "📍 Location: /Applications/\n   (Finder → Applications)",
+                "location_user": "📍 Location: ~/Applications/\n   (Finder → Go → Home → Applications)\n   or search 'DLC Unlocker' in Spotlight (⌘+Space)",
+                "important_note": "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\nBEFORE launching the game each time!"
+            }
+
         # Kill EA processes first
         killed_processes = []
         processes_to_kill = ['EADesktop', 'EA Desktop', 'Origin']
@@ -356,22 +366,14 @@ class UnlockerManager:
 
             # ИСПРАВЛЕНО: Показываем где именно установлено
             if app_path.startswith("/Applications/"):
-                location_msg = (
-                    "📍 Location: /Applications/\n"
-                    "   (Finder → Applications / Программы)\n"
-                )
+                location_msg = loc_strings["location_app"]
             else:
-                location_msg = (
-                    "📍 Location: ~/Applications/\n"
-                    "   (Finder → Go → Home → Applications)\n"
-                    "   or search 'DLC Unlocker' in Spotlight (⌘+Space)\n"
-                )
+                location_msg = loc_strings["location_user"]
 
             return True, (
-                "✅ DLC Unlocker installed successfully!\n\n"
+                f"{loc_strings['install_success']}\n\n"
                 f"{location_msg}\n"
-                "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\n"
-                "BEFORE launching the game each time!"
+                f"{loc_strings['important_note']}"
             )
 
         except Exception as e:
@@ -626,4 +628,3 @@ end run
         except Exception as e:
             logger.log(f"Failed to create launcher: {str(e)}", "ERROR")
             return False, f"Failed to create launcher: {str(e)}"
-
