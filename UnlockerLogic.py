@@ -453,7 +453,7 @@ class UnlockerManager:
             return False, f"Failed to uninstall: {str(e)}"
 
     @staticmethod
-    def create_game_launcher(logger, game_path=None):
+    def create_game_launcher(logger, game_path=None, loc_strings=None):
         """
         НОВОЕ: Создает удобный 1-click лаунчер для игры с DLC.
         
@@ -465,6 +465,16 @@ class UnlockerManager:
         Пользователю нужно только запустить "Play Sims 4 with DLC.app"
         """
         
+        # Default strings if not provided
+        if not loc_strings:
+            loc_strings = {
+                "launcher_title": "Sims 4 Launcher",
+                "launcher_start_unlocker": "Starting DLC Unlocker...",
+                "launcher_start_game": "Launching The Sims 4...",
+                "launcher_success": "Game launched! Have fun! 🎮",
+                "launcher_error": "Failed to launch game:"
+            }
+
         # Проверяем что DLC Unlocker установлен
         unlocker_path = UnlockerManager.get_unlocker_app_path()
         if not os.path.exists(unlocker_path):
@@ -522,7 +532,7 @@ class UnlockerManager:
 on run
     try
         -- Показать уведомление
-        display notification "Starting DLC Unlocker..." with title "Sims 4 Launcher"
+        display notification "{loc_strings['launcher_start_unlocker']}" with title "{loc_strings['launcher_title']}"
         
         -- Запустить DLC Unlocker (в фоне)
         do shell script "open -g \\"{unlocker_escaped}\\""
@@ -531,17 +541,17 @@ on run
         delay 3
         
         -- Показать уведомление
-        display notification "Launching The Sims 4..." with title "Sims 4 Launcher"
+        display notification "{loc_strings['launcher_start_game']}" with title "{loc_strings['launcher_title']}"
         
         -- Запустить игру
         do shell script "open \\"{game_escaped}\\""
         
         -- Успех!
         delay 1
-        display notification "Game launched! Have fun! 🎮" with title "Sims 4 Launcher"
+        display notification "{loc_strings['launcher_success']}" with title "{loc_strings['launcher_title']}"
         
     on error errMsg
-        display dialog "Failed to launch game:" & return & errMsg buttons {{"OK"}} default button 1 with icon stop
+        display dialog "{loc_strings['launcher_error']}" & return & errMsg buttons {{"OK"}} default button 1 with icon stop
     end try
 end run
 '''
@@ -595,27 +605,20 @@ end run
             except:
                 pass
             
-            # Определяем где именно создали
+            # Localized success message
+            loc_success_title = loc_strings.get("launcher_created_title", "🚀 Game Launcher created successfully!")
+            loc_location = loc_strings.get("launcher_location", "📍 Location: ")
+            loc_finder = loc_strings.get("launcher_finder", "(Finder → Applications)")
+
             if launcher_path.startswith("/Applications/"):
-                location_info = (
-                    f"📍 Location: /Applications/\n"
-                    f"   (Finder → Applications / Программы)\n\n"
-                )
+                location_info = f"{loc_location} /Applications/\n   {loc_finder}\n\n"
             else:
-                location_info = (
-                    f"📍 Location: ~/Applications/\n"
-                    f"   (Finder → Go → Home → Applications)\n\n"
-                )
-            
+                location_info = f"{loc_location} ~/Applications/\n   {loc_finder}\n\n"
+
             return True, (
-                f"🚀 Game Launcher created successfully!\n\n"
+                f"{loc_success_title}\n\n"
                 f"{location_info}"
-                f"✨ Now you can launch 'Play Sims 4 with DLC' app\n"
-                f"   and it will automatically:\n"
-                f"   1. Start DLC Unlocker\n"
-                f"   2. Launch The Sims 4\n"
-                f"   3. All DLC will be activated!\n\n"
-                f"💡 Just ONE click to play!"
+                f"{loc_strings.get('launcher_success_msg', '✨ Now you can launch created app to play!')}"
             )
             
         except subprocess.TimeoutExpired:
@@ -624,111 +627,3 @@ end run
             logger.log(f"Failed to create launcher: {str(e)}", "ERROR")
             return False, f"Failed to create launcher: {str(e)}"
 
-
-class UnlockerDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("DLC Unlocker Manager")
-        self.setFixedSize(450, 380)  # УВЕЛИЧЕНО для новой кнопки
-        self.parent_ui = parent
-        self.setup_ui()
-        self.setStyleSheet(
-            "QDialog{background-color:#1e1e1e;}"
-            "QLabel{color:white;}"
-            "QPushButton{background-color:#ffd700;color:black;border:none;"
-            "padding:10px;font-weight:bold;border-radius:4px;}"
-            "QPushButton:hover{background-color:#ffed4a;}"
-            "QPushButton.primary{background-color:#22C55E;color:white;}"
-            "QPushButton.primary:hover{background-color:#16A34A;}"
-        )
-
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(12)
-
-        header = QLabel("Lemon Unlocker Manager (macOS)")
-        header.setStyleSheet("font-size:16px;font-weight:bold;color:#ffd700;margin-bottom:10px;")
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(header)
-
-        btn_install = QPushButton("1. Install DLC Unlocker (Creates .app)")
-        btn_install.clicked.connect(self.install_unlocker)
-        layout.addWidget(btn_install)
-
-        btn_config = QPushButton("2. Update Sims 4 Config")
-        btn_config.clicked.connect(self.update_config)
-        layout.addWidget(btn_config)
-        
-        # НОВОЕ: Кнопка создания игрового лаунчера
-        btn_launcher = QPushButton("🚀 3. Create Game Launcher (1-Click Play!)")
-        btn_launcher.setProperty("class", "primary")
-        btn_launcher.setStyleSheet(
-            "QPushButton{"
-            "background-color:#22C55E;color:white;"
-            "border:none;padding:12px;font-weight:bold;"
-            "border-radius:6px;font-size:13px;"
-            "}"
-            "QPushButton:hover{background-color:#16A34A;}"
-        )
-        btn_launcher.clicked.connect(self.create_launcher)
-        layout.addWidget(btn_launcher)
-
-        # Разделитель
-        line = QLabel("─" * 50)
-        line.setStyleSheet("color:#444;font-size:8px;")
-        line.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(line)
-
-        info = QLabel(
-            "Steps 1-2: Set up DLC Unlocker\n"
-            "Step 3: Create easy launcher (recommended!)\n\n"
-            "💡 With launcher: just 1 click to play!\n"
-            "Without launcher: run DLC Unlocker before each game session"
-        )
-        info.setStyleSheet("color:#aaa;font-size:10px;text-align:center;line-height:1.4;")
-        info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        info.setWordWrap(True)
-        layout.addWidget(info)
-
-    def install_unlocker(self):
-        success, msg = UnlockerManager.install_ea_unlocker(self.parent_ui.logger)
-        if success:
-            QMessageBox.information(self, "Success", msg)
-        else:
-            QMessageBox.critical(self, "Error", msg)
-
-    def update_config(self):
-        # ИСПРАВЛЕНО: Получаем путь к игре из конфига и передаем в update_sims4_config
-        game_path = None
-        try:
-            config = ConfigManager()
-            game_path = config.get("game_path")
-        except:
-            pass
-        
-        success, msg = UnlockerManager.update_sims4_config(self.parent_ui.logger, game_path)
-        if success:
-            QMessageBox.information(self, "Success", msg)
-        else:
-            QMessageBox.critical(self, "Error", msg)
-    
-    def create_launcher(self):
-        """НОВОЕ: Создать удобный лаунчер для игры"""
-        # Получаем путь к игре из конфига
-        game_path = None
-        try:
-            config = ConfigManager()
-            game_path = config.get("game_path")
-        except:
-            pass
-        
-        success, msg = UnlockerManager.create_game_launcher(self.parent_ui.logger, game_path)
-        if success:
-            QMessageBox.information(
-                self, 
-                "🎉 Launcher Created!", 
-                msg,
-                QMessageBox.StandardButton.Ok
-            )
-        else:
-            QMessageBox.critical(self, "Error", msg)

@@ -382,7 +382,51 @@ LANG_EN = {
     "cat_sp": "Stuff Packs",
     "cat_kits": "Kits",
     "waiting": "Waiting...",
-    "verify_files": "Verify Files"
+    "verify_files": "Verify Files",
+    # Launcher Localization
+    "launcher_title": "Sims 4 Launcher",
+    "launcher_start_unlocker": "Starting DLC Unlocker...",
+    "launcher_start_game": "Launching The Sims 4...",
+    "launcher_success": "Game launched! Have fun! 🎮",
+    "launcher_error": "Failed to launch game:",
+    "launcher_created_title": "🚀 Game Launcher created successfully!",
+    "launcher_location": "📍 Location:",
+    "launcher_finder": "(Finder → Applications)",
+    "launcher_success_msg": "✨ Now you can launch 'Play Sims 4 with DLC.app' to play!\n   It will start Unlocker + Game automatically.\n\n💡 Just ONE click to play!",
+    # Help Tab
+    "help": "Help",
+    "help_launcher_title": "Option 1: Automatic Launcher (Recommended)",
+    "help_launcher_steps": "1. Go to 'Unlocker' tab.\n2. Click 'Create Game Launcher'.\n3. An app 'Play Sims 4 with DLC' will be created in your Applications folder.\n4. Just run that app to play! It handles everything for you.",
+    "help_manual_title": "Option 2: Manual Launch",
+    "help_manual_steps": "1. Open Lemon Unlocker.\n2. Make sure Unlocker status is 'Installed'.\n3. DO NOT CLOSE Lemon Unlocker.\n4. Open The Sims 4 normally (via EA App/Origin).\n5. Enjoy your DLCs!\n\nNote: You must keep Lemon Unlocker open while playing.",
+    "help_footer": "Need more help? Join our Telegram channel!",
+    # Dialogs & Updates
+    "download_error_title": "Download Error",
+    "download_failed_msg": "Download failed:\n\n{}",
+    "uninstall_dlc_title": "Uninstall DLC",
+    "uninstall_dlc_confirm": "Are you sure you want to delete {}?",
+    "success_uninstalled": "{} uninstalled.",
+    "error_delete_folder": "Could not delete folder: {}",
+    "checking": "Checking...",
+    "repair": "Repair",
+    "verification_title": "Verification",
+    "verification_complete": "Integrity check completed!",
+    "update_available_title": "Update Available",
+    "update_available_msg": "New version v{} available!\n\n{}\n\nUpdate now?",
+    "downloading": "Downloading...",
+    "check_updates": "Check for Updates",
+    "no_updates_title": "No Updates",
+    "latest_version_msg": "You are using the latest version.",
+    "update_failed_title": "Update Failed",
+    "update_failed_msg": "Failed to download update:\n{}",
+    "status_title": "STATUS",
+    "show_logs": "Show Logs",
+    "updates_title": "Updates",
+    "current_version": "Current Version: v{}",
+    # Unlocker Tab Buttons
+    "create_launcher_btn": "2. Create Game Launcher",
+    "install_btn": "1. Install Unlocker",
+    "uninstall_btn": "3. Uninstall"
 }
 
 LANG_RU = {
@@ -432,7 +476,51 @@ LANG_RU = {
     "cat_gp": "Наборы",
     "cat_sp": "Каталоги",
     "cat_kits": "Комплекты",
-    "waiting": "В очереди..."
+    "waiting": "В очереди...",
+    # Launcher Localization
+    "launcher_title": "Запуск Sims 4",
+    "launcher_start_unlocker": "Запуск DLC Unlocker...",
+    "launcher_start_game": "Запуск The Sims 4...",
+    "launcher_success": "Игра запущена! Приятной игры! 🎮",
+    "launcher_error": "Ошибка запуска игры:",
+    "launcher_created_title": "🚀 Игровой Лаунчер успешно создан!",
+    "launcher_location": "📍 Расположение:",
+    "launcher_finder": "(Finder → Программы / Applications)",
+    "launcher_success_msg": "✨ Теперь можно запускать 'Play Sims 4 with DLC.app' для игры!\n   Он автоматически запустит Анлокер + Игру.\n\n💡 Всего ОДИН клик чтобы играть!",
+    # Help Tab
+    "help": "Помощь",
+    "help_launcher_title": "Вариант 1: Автоматический Лаунчер (Рекомендуем! 💖)",
+    "help_launcher_steps": "1. Перейдите во вкладку 'Анлокер'.\n2. Нажмите кнопку 'Создать Лаунчер'.\n3. В ваших Программах появится 'Play Sims 4 with DLC'.\n4. Просто запускайте это приложение, чтобы играть!\n   Оно само запустит всё, что нужно.",
+    "help_manual_title": "Вариант 2: Запуск вручную",
+    "help_manual_steps": "1. Откройте Lemon Unlocker.\n2. Убедитесь, что статус Анлокера - 'Установлен'.\n3. НЕ ЗАКРЫВАЙТЕ Lemon Unlocker.\n4. Запустите The Sims 4 как обычно (через EA App/Origin).\n5. Играйте с DLC!\n\nВажно: Программа должна быть открыта, пока вы играете.",
+    "help_footer": "Нужна помощь? Заходите в наш Telegram канал!",
+    # Dialogs & Updates
+    "download_error_title": "Ошибка загрузки",
+    "download_failed_msg": "Ошибка загрузки:\n\n{}",
+    "uninstall_dlc_title": "Удаление DLC",
+    "uninstall_dlc_confirm": "Вы уверены, что хотите удалить {}?",
+    "success_uninstalled": "{} удалено.",
+    "error_delete_folder": "Не удалось удалить папку: {}",
+    "checking": "Проверка...",
+    "repair": "Починить",
+    "verification_title": "Проверка",
+    "verification_complete": "Проверка целостности завершена!",
+    "update_available_title": "Доступно обновление",
+    "update_available_msg": "Доступна новая версия v{}!\n\n{}\n\nОбновить сейчас?",
+    "downloading": "Загрузка...",
+    "check_updates": "Проверить обновления",
+    "no_updates_title": "Нет обновлений",
+    "latest_version_msg": "У вас установлена последняя версия.",
+    "update_failed_title": "Ошибка обновления",
+    "update_failed_msg": "Не удалось скачать обновление:\n{}",
+    "status_title": "СТАТУС",
+    "show_logs": "Показать логи",
+    "updates_title": "Обновления",
+    "current_version": "Текущая версия: v{}",
+    # Unlocker Tab Buttons
+    "create_launcher_btn": "2. Создать Лаунчер",
+    "install_btn": "1. Установить Анлокер",
+    "uninstall_btn": "3. Удалить"
 }
 
 class Localization:
@@ -992,6 +1080,7 @@ class Sidebar(QFrame):
         self.add_nav_btn(Localization.get("catalog"), "🛒", 2)  # Catalog
         self.add_nav_btn(Localization.get("unlocker"), "🔓", 3)
         self.add_nav_btn(Localization.get("settings"), "⚙️", 4)
+        self.add_nav_btn(Localization.get("help"), "❓", 5)
         
         layout.addStretch()
         
@@ -1124,9 +1213,8 @@ class DashboardPage(QWidget):
         steps_data = [
             ("1", "📁", Localization.get("step_path") if Localization.get("step_path") else "Select Path"),
             ("2", "🔓", Localization.get("step_install_unlocker") if Localization.get("step_install_unlocker") else "Install Unlocker"),
-            ("3", "📝", Localization.get("step_update_config") if Localization.get("step_update_config") else "Update Config"),
-            ("4", "🛒", Localization.get("step_install_dlc") if Localization.get("step_install_dlc") else "Get DLCs"),
-            ("5", "🎉", Localization.get("step_enjoy") if Localization.get("step_enjoy") else "Enjoy!")
+            ("3", "🛒", Localization.get("step_install_dlc") if Localization.get("step_install_dlc") else "Get DLCs"),
+            ("4", "🎉", Localization.get("step_enjoy") if Localization.get("step_enjoy") else "Enjoy!")
         ]
         
         for num, icon, text in steps_data:
@@ -1481,7 +1569,7 @@ class DashboardPage(QWidget):
             total_size = 0
             try:
                 for item in os.listdir(path):
-                    if item.upper().startswith(("EP", "GP", "SP")):
+                    if item.upper().startswith(("EP", "GP", "SP", "FP")):
                         full_path = os.path.join(path, item)
                         if os.path.exists(os.path.join(full_path, "__Installer")) or any(os.scandir(full_path)): 
                             installed += 1
@@ -2186,29 +2274,29 @@ class DLCListPage(QWidget):
     def on_download_complete(self, success, btn=None):
         if success:
             if btn and not sip.isdeleted(btn):
-                btn.setText("Installed")
+                btn.setText(Localization.get("success"))
                 btn.setStyleSheet(f"background-color: {COLOR_BG_DARK}; border: 1px solid {COLOR_SUCCESS}; color: {COLOR_SUCCESS};")
             # Refresh lists
             QTimer.singleShot(1000, self.refresh_all_lists)
         else:
             if btn and not sip.isdeleted(btn):
-                btn.setText("Failed ⓘ")
+                btn.setText(Localization.get("error") + " ⓘ")
                 btn.setEnabled(True)
                 btn.setStyleSheet(f"background-color: {COLOR_BG_DARK}; border: 1px solid {COLOR_DANGER}; color: {COLOR_DANGER};")
                 # Tooltip with error details (set by error_msg signal)
                 if not btn.toolTip():
-                    btn.setToolTip("Download failed. Check logs/ folder for details.")
+                    btn.setToolTip(Localization.get("download_failed_msg").format("See logs"))
         
         # Whether success or failure, try to process next in queue
         QTimer.singleShot(500, self.process_next_download)
 
     def on_download_error(self, error_msg):
         """Show download error in a popup so user can see it even from .exe"""
-        QMessageBox.warning(self, "Download Error", f"Download failed:\n\n{error_msg}")
+        QMessageBox.warning(self, Localization.get("download_error_title"), Localization.get("download_failed_msg").format(error_msg))
 
     def uninstall_dlc(self, dlc_id):
-        reply = QMessageBox.question(self, 'Uninstall DLC', 
-                                     f"Are you sure you want to delete {dlc_id}?",
+        reply = QMessageBox.question(self, Localization.get("uninstall_dlc_title"), 
+                                     Localization.get("uninstall_dlc_confirm").format(dlc_id),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
                                      QMessageBox.StandardButton.No)
 
@@ -2219,14 +2307,14 @@ class DLCListPage(QWidget):
             try:
                 if os.path.exists(target_path):
                     shutil.rmtree(target_path)
-                    QMessageBox.information(self, "Success", f"{dlc_id} uninstalled.")
+                    QMessageBox.information(self, Localization.get("success"), Localization.get("success_uninstalled").format(dlc_id))
                     self.refresh_all_lists()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Could not delete folder: {str(e)}")
+                QMessageBox.critical(self, Localization.get("error"), Localization.get("error_delete_folder").format(str(e)))
 
     def verify_files(self):
         self.btn_verify.setEnabled(False)
-        self.btn_verify.setText("Checking..." if Localization.current_lang == "en" else "Проверка...")
+        self.btn_verify.setText(Localization.get("checking"))
         
         dlc_list = []
         path = self.integrity_manager.game_path
@@ -2270,7 +2358,7 @@ class DLCListPage(QWidget):
                      if status_code in [1, 2]:
                          if hasattr(widget, 'action_button'):
                              btn = widget.action_button
-                             btn.setText("Repair" if Localization.current_lang == "en" else "Починить") 
+                             btn.setText(Localization.get("repair"))   
                              btn.setStyleSheet(f"background-color: {COLOR_ACCENT}; color: {COLOR_BG_DARK}; border-radius: 6px; font-weight: 700;")
                              try: btn.clicked.disconnect()
                              except: pass
@@ -2285,7 +2373,7 @@ class DLCListPage(QWidget):
     def on_verify_finished(self):
         self.btn_verify.setEnabled(True)
         self.btn_verify.setText(Localization.get("verify_files"))
-        QMessageBox.information(self, "Verification", "Integrity check completed!")
+        QMessageBox.information(self, Localization.get("verification_title"), Localization.get("verification_complete"))
 
     def refresh_all_lists(self):
         # Refresh both Library and Catalog
@@ -2329,10 +2417,10 @@ class UnlockerPage(QWidget):
         
         status_info = QVBoxLayout()
         status_info.setAlignment(Qt.AlignmentFlag.AlignVCenter)
-        self.lbl_status_title = QLabel("STATUS") 
+        self.lbl_status_title = QLabel(Localization.get("status_title")) 
         self.lbl_status_title.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 13px; font-weight: 700; letter-spacing: 1.2px; background: transparent;")
         
-        self.lbl_status_val = QLabel("Checking...")
+        self.lbl_status_val = QLabel(Localization.get("checking"))
         self.lbl_status_val.setStyleSheet("color: white; font-size: 20px; font-weight: 800; background: transparent;")
         
         status_info.addWidget(self.lbl_status_title)
@@ -2349,26 +2437,24 @@ class UnlockerPage(QWidget):
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(20)
         
-        # 1. Install
-        self.btn_install = self.create_action_card("🚀", Localization.get("install_unlocker"), "#22C55E")
+        # Actions Row
+        actions_layout = QHBoxLayout()
+        actions_layout.setSpacing(20)
+        
+        # 1. Install (Green)
+        self.btn_install = self.create_action_card("🚀", Localization.get("install_btn"), "#22C55E")
         self.btn_install.clicked.connect(self.install_unlocker)
         
-        # 2. Config
-        self.btn_config = self.create_action_card("📝", Localization.get("update_config"), "#3B82F6")
-        self.btn_config.clicked.connect(self.update_config)
+        # 2. Create Launcher (Purple)
+        self.btn_launcher = self.create_action_card("🎮", Localization.get("create_launcher_btn"), "#8B5CF6")
+        self.btn_launcher.clicked.connect(self.create_launcher)
         
-        # 3. Uninstall
-        self.btn_uninstall = self.create_action_card("🗑️", Localization.get("uninstall_unlocker"), "#EF4444")
+        # 3. Uninstall (Red)
+        self.btn_uninstall = self.create_action_card("🗑️", Localization.get("uninstall_btn"), "#EF4444")
         self.btn_uninstall.clicked.connect(self.uninstall_unlocker)
         
         actions_layout.addWidget(self.btn_install)
-        actions_layout.addWidget(self.btn_config)
-        
-        # 4. Create Launcher (Run Game)
-        self.btn_launcher = self.create_action_card("🎮", "Create Launcher", "#8B5CF6") # Purple
-        self.btn_launcher.clicked.connect(self.create_launcher)
         actions_layout.addWidget(self.btn_launcher)
-        
         actions_layout.addWidget(self.btn_uninstall)
         
         layout.addLayout(actions_layout)
@@ -2397,7 +2483,7 @@ class UnlockerPage(QWidget):
         self.console.hide() 
         
         # Show logs button
-        self.btn_logs = QPushButton("Show Logs")
+        self.btn_logs = QPushButton(Localization.get("show_logs"))
         self.btn_logs.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_logs.setCheckable(True)
         self.btn_logs.setStyleSheet(f"color: {COLOR_ACCENT}; background: transparent; border: none; font-weight: bold;")
@@ -2422,6 +2508,27 @@ class UnlockerPage(QWidget):
                 }}
             """)
             self.lbl_status_val.setStyleSheet(f"color: {COLOR_SUCCESS}; font-size: 20px; font-weight: 800; background: transparent;")
+            
+            # Smart UI: Unlocker Installed
+            # Show "Create Launcher" (Purple) as main action
+            self.btn_install.setVisible(False)
+            self.btn_launcher.setVisible(True)
+            self.btn_uninstall.setVisible(True)
+            
+            # Make Launcher button big and glowing
+            self.btn_launcher.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLOR_BG_LIGHT};
+                    border: 2px solid #8B5CF6;
+                    border-radius: 16px;
+                    text-align: center;
+                }}
+                QPushButton:hover {{
+                    background-color: #8B5CF620;
+                    border: 2px solid #A78BFA;
+                }}
+            """)
+            
         else:
             self.lbl_status_val.setText(Localization.get("status_not_installed"))
             self.status_icon.setText("❌")
@@ -2433,6 +2540,25 @@ class UnlockerPage(QWidget):
                 }}
             """)
             self.lbl_status_val.setStyleSheet(f"color: {COLOR_DANGER}; font-size: 20px; font-weight: 800; background: transparent;")
+            
+            # Smart UI: Unlocker NOT Installed
+            # Show "Install" (Green) as main action
+            self.btn_install.setVisible(True)
+            self.btn_launcher.setVisible(False)
+            self.btn_uninstall.setVisible(False)
+            
+            # Make Install button big
+            self.btn_install.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {COLOR_BG_LIGHT};
+                    border: 2px solid {COLOR_SUCCESS};
+                    border-radius: 16px;
+                    text-align: center;
+                }}
+                QPushButton:hover {{
+                    background-color: {COLOR_SUCCESS}20;
+                }}
+            """)
 
     def create_action_card(self, icon, text, color):
         btn = QPushButton()
@@ -2516,7 +2642,7 @@ class UnlockerPage(QWidget):
                 QMessageBox.critical(self, Localization.get("error"), msg)
                 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to update config: {str(e)}")
+            QMessageBox.critical(self, Localization.get("error"), f"Failed to update config: {str(e)}")
 
     def create_launcher(self):
         try:
@@ -2526,14 +2652,32 @@ class UnlockerPage(QWidget):
             
             # Get game path from main config
             game_path = self.parent_window.config.get("game_path")
+
+            # Prepare localized strings
+            loc_strings = {
+                "launcher_title": Localization.get("launcher_title"),
+                "launcher_start_unlocker": Localization.get("launcher_start_unlocker"),
+                "launcher_start_game": Localization.get("launcher_start_game"),
+                "launcher_success": Localization.get("launcher_success"),
+                "launcher_error": Localization.get("launcher_error"),
+                "launcher_created_title": Localization.get("launcher_created_title"),
+                "launcher_location": Localization.get("launcher_location"),
+                "launcher_finder": Localization.get("launcher_finder"),
+                "launcher_success_msg": Localization.get("launcher_success_msg")
+            }
             
-            success, msg = UnlockerManager.create_game_launcher(self.parent_window.logger, game_path)
+            success, msg = UnlockerManager.create_game_launcher(
+                self.parent_window.logger, 
+                game_path,
+                loc_strings
+            )
             
             if success:
                 self.parent_window.logger.log(msg, "SUCCESS")
+                title = "Launcher Created!" if Localization.current_lang == "en" else "Лаунчер создан!"
                 QMessageBox.information(
                     self, 
-                    "🎉 Launcher Created!", 
+                    title, 
                     msg,
                     QMessageBox.StandardButton.Ok
                 )
@@ -2542,7 +2686,7 @@ class UnlockerPage(QWidget):
                 QMessageBox.critical(self, "Error", msg)
                 
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to create launcher: {str(e)}")
+            QMessageBox.critical(self, Localization.get("error"), f"{Localization.get('launcher_error')} {str(e)}")
 
     def uninstall_unlocker(self):
         # Use new method
@@ -2656,6 +2800,105 @@ rm -- "$0"
         except Exception as e:
             return False, str(e)
 
+class HelpPage(QWidget):
+    def __init__(self, parent_window):
+        super().__init__()
+        self.parent_window = parent_window
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(25)
+        
+        # Header
+        header = QLabel(Localization.get("help"))
+        header.setStyleSheet(f"font-size: 32px; font-weight: 800; color: {COLOR_TEXT_WHITE}; letter-spacing: 1px;")
+        layout.addWidget(header)
+        
+        # Content Layout (Scrollable if needed, but we'll try to fit in)
+        # Using a ScrollArea is safer for small screens
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("background: transparent; border: none;")
+        
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setSpacing(20)
+        content_layout.setContentsMargins(0, 0, 20, 0) # Right margin for scrollbar
+        
+        # --- Option 1: Launcher ---
+        grp_launcher = QFrame()
+        grp_launcher.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLOR_BG_LIGHT};
+                border-radius: 16px;
+                border: 1px solid {COLOR_ACCENT};
+            }}
+        """)
+        l_layout = QVBoxLayout(grp_launcher)
+        l_layout.setContentsMargins(25, 25, 25, 25)
+        
+        l_title = QLabel(Localization.get("help_launcher_title"))
+        l_title.setStyleSheet(f"color: {COLOR_ACCENT}; font-size: 18px; font-weight: 800; border: none; background: transparent;")
+        l_title.setWordWrap(True)
+        
+        l_text = QLabel(Localization.get("help_launcher_steps"))
+        l_text.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 14px; line-height: 1.6; border: none; background: transparent;")
+        l_text.setWordWrap(True)
+        
+        l_layout.addWidget(l_title)
+        l_layout.addWidget(l_text)
+        
+        content_layout.addWidget(grp_launcher)
+        
+        # --- Option 2: Manual ---
+        grp_manual = QFrame()
+        grp_manual.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLOR_BG_LIGHT};
+                border-radius: 16px;
+                border: 1px solid #334155;
+            }}
+        """)
+        m_layout = QVBoxLayout(grp_manual)
+        m_layout.setContentsMargins(25, 25, 25, 25)
+        
+        m_title = QLabel(Localization.get("help_manual_title"))
+        m_title.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 18px; font-weight: 800; border: none; background: transparent;")
+        
+        m_text = QLabel(Localization.get("help_manual_steps"))
+        m_text.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 14px; line-height: 1.6; border: none; background: transparent;")
+        m_text.setWordWrap(True)
+        
+        m_layout.addWidget(m_title)
+        m_layout.addWidget(m_text)
+        
+        content_layout.addWidget(grp_manual)
+        
+        # --- Footer ---
+        footer_layout = QHBoxLayout()
+        footer_layout.addStretch()
+        
+        footer_lbl = QLabel(Localization.get("help_footer"))
+        footer_lbl.setStyleSheet(f"color: {COLOR_ACCENT}; font-weight: bold; font-size: 14px;")
+        
+        btn_tg = QPushButton("Telegram")
+        btn_tg.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_tg.setStyleSheet(f"background-color: #229ED9; color: white; border-radius: 6px; padding: 8px 16px; font-weight: bold;")
+        btn_tg.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://t.me/lemon4elosimshub")))
+        
+        footer_layout.addWidget(footer_lbl)
+        footer_layout.addWidget(btn_tg)
+        footer_layout.addStretch()
+        
+        content_layout.addSpacing(10)
+        content_layout.addLayout(footer_layout)
+        content_layout.addStretch()
+        
+        scroll.setWidget(content_widget)
+        layout.addWidget(scroll)
+
 class SettingsPage(QWidget):
     def __init__(self, parent_window):
         super().__init__()
@@ -2748,16 +2991,16 @@ class SettingsPage(QWidget):
         container_layout.addWidget(line)
 
         # --- Update Section ---
-        update_title = QLabel("Updates")
+        update_title = QLabel(Localization.get("updates_title"))
         update_title.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 14px; font-weight: 600; background: transparent; border: none;")
         container_layout.addWidget(update_title)
 
         update_row = QHBoxLayout()
         
-        self.lbl_version = QLabel(f"Current Version: v{APP_VERSION}")
+        self.lbl_version = QLabel(Localization.get("current_version").format(APP_VERSION))
         self.lbl_version.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 14px; background: transparent;")
         
-        self.btn_check_update = QPushButton("Check for Updates")
+        self.btn_check_update = QPushButton(Localization.get("check_updates"))
         self.btn_check_update.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_check_update.setStyleSheet(f"""
             QPushButton {{
@@ -2872,25 +3115,25 @@ class SettingsPage(QWidget):
             self.config.save()
             Localization.set_language(lang_code)
     def check_updates(self):
-        self.btn_check_update.setText("Checking...")
+        self.btn_check_update.setText(Localization.get("checking"))
         self.btn_check_update.setEnabled(False)
         QTimer.singleShot(100, self._perform_update_check)
         
     def _perform_update_check(self):
         has_update, version, url, notes = Updater.check_updates()
         if has_update:
-            msg = f"New version v{version} available!\n\n{notes}\n\nUpdate now?"
-            reply = QMessageBox.question(self, "Update Available", msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            msg = Localization.get("update_available_msg").format(version, notes)
+            reply = QMessageBox.question(self, Localization.get("update_available_title"), msg, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
             
             if reply == QMessageBox.StandardButton.Yes:
-                self.btn_check_update.setText("Downloading...")
+                self.btn_check_update.setText(Localization.get("downloading"))
                 QTimer.singleShot(100, lambda: self._start_update_download(url))
             else:
-                self.btn_check_update.setText("Check for Updates")
+                self.btn_check_update.setText(Localization.get("check_updates"))
                 self.btn_check_update.setEnabled(True)
         else:
-            QMessageBox.information(self, "No Updates", "You are using the latest version.")
-            self.btn_check_update.setText("Check for Updates")
+            QMessageBox.information(self, Localization.get("no_updates_title"), Localization.get("latest_version_msg"))
+            self.btn_check_update.setText(Localization.get("check_updates"))
             self.btn_check_update.setEnabled(True)
 
     def _start_update_download(self, url):
@@ -2898,8 +3141,8 @@ class SettingsPage(QWidget):
         if success:
             Updater.apply_update(path_or_err)
         else:
-            QMessageBox.critical(self, "Update Failed", f"Failed to download update:\n{path_or_err}")
-            self.btn_check_update.setText("Check for Updates")
+            QMessageBox.critical(self, Localization.get("update_failed_title"), Localization.get("update_failed_msg").format(path_or_err))
+            self.btn_check_update.setText(Localization.get("check_updates"))
             self.btn_check_update.setEnabled(True)
 
 class LemonWindow(QMainWindow):
@@ -2914,9 +3157,6 @@ class LemonWindow(QMainWindow):
         icon_path = os.path.join(base_path, "icon.png")
         if os.path.exists(icon_path):
              self.setWindowIcon(QIcon(icon_path))
-        
-        # Initialize Config
-        self.config = ConfigManager()
         
         self.central_widget = QWidget()
         self.central_widget.setObjectName("Central")
@@ -2950,12 +3190,14 @@ class LemonWindow(QMainWindow):
         self.catalog_page = DLCListPage(self, mode="catalog")
         self.unlocker_page = UnlockerPage(self)
         self.settings_page = SettingsPage(self)
+        self.help_page = HelpPage(self)
         
         self.pages.addWidget(self.dashboard_page) # 0
         self.pages.addWidget(self.library_page)   # 1
         self.pages.addWidget(self.catalog_page)   # 2
         self.pages.addWidget(self.unlocker_page)  # 3
         self.pages.addWidget(self.settings_page)  # 4
+        self.pages.addWidget(self.help_page)      # 5
 
         self.main_layout.addWidget(self.content_area)
         
