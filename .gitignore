@@ -1,7 +1,6 @@
 # Python build artifacts
 __pycache__/
 *.pyc
-*.spec
 *.pyo
 *.pyd
 build/
@@ -15,7 +14,6 @@ logs/
 *.log
 check_arch.py
 fetch_sizes.py
-icon.png
 git_upload.bat
 build_windows.bat
 build_mac.sh
