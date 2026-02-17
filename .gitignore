@@ -1,15 +1,37 @@
-# Exclude build artifacts
-build/
-dist/
+# Python build artifacts
 __pycache__/
 *.pyc
-check_arch.py
+*.spec
+*.pyo
+*.pyd
+build/
+dist/
 
-# Local config/logs
-logs/
+
+# Local configuration and logs
 config.json
-.DS_Store
+dlc_sizes.json
+logs/
+*.log
+check_arch.py
+fetch_sizes.py
+icon.png
+git_upload.bat
+build_windows.bat
+app.manifest
+version.txt
+7z/
 
-# Virtual environment (if any)
+# Virtual environments
 venv/
 env/
+.env
+.venv/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.idea/
+.vscode/

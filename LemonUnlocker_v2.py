@@ -10,7 +10,7 @@ import webbrowser
 import traceback
 import datetime
 import platform
-import subprocess  # ИСПРАВЛЕНО: Добавлен импорт subprocess
+import subprocess
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFrame, QScrollArea, 
                              QProgressBar, QStackedWidget, QFileDialog, QMessageBox, 
@@ -19,7 +19,6 @@ from PyQt6.QtCore import Qt, QSize, QTimer, QThread, pyqtSignal, QPropertyAnimat
 from PyQt6.QtGui import QIcon, QColor, QDesktopServices, QCursor
 from PyQt6 import sip
 
-# Import logic from existing modules
 from dlc_database import DLCDatabase
 from UnlockerLogic import UnlockerManager, AdminElevator, ConfigManager
 from IntegrityChecker import IntegrityManager, IntegrityWorker
@@ -28,12 +27,11 @@ APP_VERSION = "1.1.2"
 GITHUB_REPO = "Limon4ik66607/LemonUnlocker" 
 
 
-# --- THEME CONSTANTS ---
-COLOR_BG_DARK = "#0f172a"      # Deep Navy/Black
-COLOR_BG_LIGHT = "#1e293b"     # Lighter Navy/Gray
-COLOR_BG_CARD = "#334155"      # Even Lighter Navy (Buttons/Inputs)
-COLOR_ACCENT = "#FACC15"       # Neon Lemon Yellow
-COLOR_ACCENT_HOVER = "#EAB308" # Darker Lemon
+COLOR_BG_DARK = "#0f172a"
+COLOR_BG_LIGHT = "#1e293b"
+COLOR_BG_CARD = "#334155"
+COLOR_ACCENT = "#FACC15"
+COLOR_ACCENT_HOVER = "#EAB308"
 COLOR_TEXT_WHITE = "#FFFFFF"
 COLOR_TEXT_GRAY = "#94a3b8"
 COLOR_DANGER = "#EF4444"
@@ -74,7 +72,7 @@ SCROLLBAR_STYLESHEET = f"""
         margin: 0px;
     }}
     QScrollBar::handle:vertical {{
-        background: #475569;
+        background:
         min-height: 20px;
         border-radius: 4px;
     }}
@@ -83,17 +81,13 @@ SCROLLBAR_STYLESHEET = f"""
     }}
 """
 
-# --- HELPERS ---
 
 class GameDetector:
     @staticmethod
     def find_game():
-        # Common locations for The Sims 4
         common_paths = [
-            # macOS
             "/Applications/The Sims 4.app",
             os.path.expanduser("~/Applications/The Sims 4.app"),
-            # Windows (just in case)
             r"C:\Program Files\EA Games\The Sims 4",
             r"C:\Program Files (x86)\Origin Games\The Sims 4",
             r"C:\Program Files\The Sims 4"
@@ -111,14 +105,12 @@ class FileUtils:
         for dirpath, dirnames, filenames in os.walk(start_path):
             for f in filenames:
                 fp = os.path.join(dirpath, f)
-                # skip if it is symbolic link
                 if not os.path.islink(fp):
                     total_size += os.path.getsize(fp)
         return total_size
 
     @staticmethod
     def format_size(size):
-        # 2^10 = 1024
         power = 2**10
         n = 0
         power_labels = {0 : '', 1: 'K', 2: 'M', 3: 'G', 4: 'T'}
@@ -138,7 +130,6 @@ class Updater:
                 version = data.get("tag_name", "").replace("v", "")
                 body = data.get("body", "")
                 date_str = data.get("published_at", "")
-                # Format date YYYY-MM-DD
                 if date_str:
                     date = date_str.split("T")[0]
                 else:
@@ -158,11 +149,8 @@ class Updater:
                 data = resp.json()
                 remote_ver = data.get("tag_name", "").replace("v", "")
                 
-                # Compare versions (simple string compare might fail for 1.10 vs 1.2)
-                # Use packaging.version
                 from packaging import version
                 if version.parse(remote_ver) > version.parse(APP_VERSION):
-                    # Get download url for .dmg (mac) or .exe (win)
                     download_url = ""
                     assets = data.get("assets", [])
                     ext = ".dmg" if sys.platform == "darwin" else ".exe"
@@ -203,7 +191,6 @@ class Updater:
 
     @staticmethod
     def apply_update(path):
-        # Open the installer/dmg
         if sys.platform == "darwin":
             subprocess.run(["open", path])
         else:
@@ -224,7 +211,6 @@ class CrashHandler:
         err_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         print("CRITICAL ERROR:", err_msg)
         
-        # Log to file
         try:
             log_dir = os.path.expanduser("~/Library/Logs/LemonUnlocker") if sys.platform == "darwin" else "logs"
             os.makedirs(log_dir, exist_ok=True)
@@ -234,7 +220,6 @@ class CrashHandler:
         except:
             pass
             
-        # Show UI if possible
         try:
             app = QApplication.instance()
             if app:
@@ -248,20 +233,18 @@ class CrashHandler:
             pass
 
 class ImprovedLogger(QObject):
-    log_signal = pyqtSignal(str, str) # msg, level
+    log_signal = pyqtSignal(str, str)
 
     def __init__(self):
         super().__init__()
-        self.widget = None # QTextEdit
+        self.widget = None
 
     def log(self, message, level="INFO"):
-        # Console output
         timestamp = datetime.datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] [{level}] {message}")
         
-        # GUI Output
         if self.widget:
-            color = "#cbd5e1" # Default
+            color = "#cbd5e1"
             if level == "ERROR": color = "#ef4444"
             elif level == "SUCCESS": color = "#22c55e"
             elif level == "WARNING": color = "#facc15"
@@ -269,26 +252,17 @@ class ImprovedLogger(QObject):
             html = f"<span style='color: #64748b'>[{timestamp}]</span> <span style='color: {color}'>{message}</span>"
             QTimer.singleShot(0, lambda: self.widget.append(html))
 
-# --- UI CLASSES ---
 
-# ... (Sidebar, DashboardPage, DLCListPage, UnlockerPage, SettingsPage, HelpPage classes omitted for brevity) ...
-# I will supply the content for LemonWindow.__init__ here.
-# But wait, replace_file_content replaces a block.
-# The user already provided the file content in prev turns.
-# I need to match the block exactly.
-# The range I selected (1-3171) is HUGE. I should only replace import lines and the __init__ method of LemonWindow.
 
-# Let's do it in 2 steps or just use multi_replace.
 pass
 GITHUB_REPO = "Limon4ik66607/LemonUnlocker" 
 
 
-# --- THEME CONSTANTS ---
-COLOR_BG_DARK = "#0f172a"      # Deep Navy/Black
-COLOR_BG_LIGHT = "#1e293b"     # Lighter Navy/Gray
-COLOR_BG_CARD = "#334155"      # Even Lighter Navy (Buttons/Inputs)
-COLOR_ACCENT = "#FACC15"       # Neon Lemon Yellow
-COLOR_ACCENT_HOVER = "#EAB308" # Darker Lemon
+COLOR_BG_DARK = "#0f172a"
+COLOR_BG_LIGHT = "#1e293b"
+COLOR_BG_CARD = "#334155"
+COLOR_ACCENT = "#FACC15"
+COLOR_ACCENT_HOVER = "#EAB308"
 COLOR_TEXT_WHITE = "#FFFFFF"
 COLOR_TEXT_GRAY = "#94a3b8"
 COLOR_DANGER = "#EF4444"
@@ -330,16 +304,16 @@ STYLE_SHEET = f"""
         font-weight: 500;
     }}
     QPushButton:hover {{
-        background-color: #334155;
+        background-color:
     }}
     QPushButton:pressed {{
-        background-color: #0f172a;
+        background-color:
     }}
     
     /* Primary Action Button */
     QPushButton.primary {{
         background-color: {COLOR_ACCENT};
-        color: #000000;
+        color:
         font-weight: bold;
     }}
     QPushButton.primary:hover {{
@@ -349,7 +323,7 @@ STYLE_SHEET = f"""
     /* Inputs */
     QLineEdit {{
         background-color: {COLOR_BG_LIGHT};
-        border: 1px solid #334155;
+        border: 1px solid
         border-radius: 6px;
         padding: 8px;
         color: {COLOR_TEXT_WHITE};
@@ -362,13 +336,13 @@ STYLE_SHEET = f"""
     QFrame.card {{
         background-color: {COLOR_BG_LIGHT};
         border-radius: 12px;
-        border: 1px solid #334155;
+        border: 1px solid
     }}
     
     /* Sidebar */
-    QFrame#Sidebar {{
-        background-color: #020617; /* Very Dark */
-        border-right: 1px solid #1e293b;
+    QFrame
+        background-color:
+        border-right: 1px solid
     }}
     QPushButton.nav-btn {{
         text-align: left;
@@ -380,18 +354,18 @@ STYLE_SHEET = f"""
         border-left: 3px solid transparent;
     }}
     QPushButton.nav-btn:hover {{
-        background-color: #1e293b;
+        background-color:
         color: {COLOR_TEXT_WHITE};
     }}
     QPushButton.nav-btn.active {{
-        background-color: #1e293b;
+        background-color:
         color: {COLOR_ACCENT};
         border-left: 3px solid {COLOR_ACCENT};
         font-weight: bold;
     }}
     
     /* Title Bar */
-    QFrame#TitleBar {{
+    QFrame
         background-color: transparent;
     }}
     QPushButton.win-btn {{
@@ -401,9 +375,9 @@ STYLE_SHEET = f"""
         font-size: 12px;
     }}
     QPushButton.win-btn:hover {{
-        background-color: #334155;
+        background-color:
     }}
-    QPushButton.win-btn#close-btn:hover {{
+    QPushButton.win-btn
         background-color: {COLOR_DANGER};
     }}
 """
@@ -425,7 +399,6 @@ SCROLLBAR_STYLESHEET = f"""
     }}
 """
 
-# --- UTILITY CLASSES ---
 
 import math
 
@@ -453,7 +426,6 @@ class FileUtils:
         s = round(size_bytes / p, 2)
         return "%s %s" % (s, size_name[i])
 
-# ИСПРАВЛЕНО: Добавлена функция для получения директории данных приложения
 def get_app_data_dir():
     """
     Возвращает путь к директории для хранения данных приложения.
@@ -508,10 +480,8 @@ class CrashHandler:
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
 
-        # Prepare log content
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         
-        # ИСПРАВЛЕНО: Используем app data directory вместо CWD
         log_dir = os.path.join(get_app_data_dir(), "logs")
         os.makedirs(log_dir, exist_ok=True)
             
@@ -519,7 +489,6 @@ class CrashHandler:
         
         error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         
-        # Save to file
         try:
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"Lemon Unlocker v{APP_VERSION} Crash Log - {timestamp}\n")
@@ -529,11 +498,9 @@ class CrashHandler:
         except Exception as e:
             print(f"Failed to write crash log: {e}")
             
-        # Notify user (if GUI is alive)
         try:
             app = QApplication.instance()
             if app:
-                # ИСПРАВЛЕНО: Определены обе версии сообщения
                 msg_en = (
                     f"An unhandled exception occurred.\n"
                     f"Log saved to: {os.path.abspath(filename)}\n\n"
@@ -546,12 +513,9 @@ class CrashHandler:
                     f"Пожалуйста, отправьте этот файл разработчику в Telegram: @L3mon4elo4"
                 )
                 
-                # Check for Russian locale simply via system if possible, or just append it
-                # For simplicity and robustness, we will show a bilingual message or just the one requested.
                 title = "Critical Error"
                 lang = "en"
                 
-                # Safely check for Localization
                 try:
                     if "Localization" in globals():
                         lang = globals()["Localization"].current_lang
@@ -589,7 +553,6 @@ class GameDetector:
                 return path
         return None
 
-# --- LOCALIZATION ---
 LANG_EN = {
     "dashboard": "Home",
     "library": "Library",
@@ -638,7 +601,6 @@ LANG_EN = {
     "cat_kits": "Kits",
     "waiting": "Waiting...",
     "verify_files": "Verify Files",
-    # Launcher Localization
     "launcher_title": "Sims 4 Launcher",
     "launcher_start_unlocker": "Starting DLC Unlocker...",
     "launcher_start_game": "Launching The Sims 4...",
@@ -648,14 +610,12 @@ LANG_EN = {
     "launcher_location": "📍 Location:",
     "launcher_finder": "(Finder → Applications)",
     "launcher_success_msg": "✨ Now you can launch 'Play Sims 4 with DLC.app' to play!\n   It will start Unlocker + Game automatically.\n\n💡 Just ONE click to play!",
-    # Help Tab
     "help": "Help",
     "help_launcher_title": "Option 1: Automatic Launcher (Recommended)",
     "help_launcher_steps": "1. Go to 'Unlocker' tab.\n2. Click 'Create Game Launcher'.\n3. An app 'Play Sims 4 with DLC' will be created in your Applications folder.\n4. Just run that app to play! It handles everything for you.",
     "help_manual_title": "Option 2: Manual Launch",
     "help_manual_steps": "1. Open DLC Unlocker - The Sims 4.app.\n2. Make sure Unlocker status is 'Installed'.\n3. DO NOT CLOSE DLC Unlocker - The Sims 4.app.\n4. Open The Sims 4 normally (via EA App/Origin).\n5. Enjoy your DLCs!\n\nNote: You must keep DLC Unlocker - The Sims 4.app open while playing.",
     "help_footer": "Need more help? Join our Telegram channel!",
-    # Dialogs & Updates
     "download_error_title": "Download Error",
     "download_failed_msg": "Download failed:\n\n{}",
     "uninstall_dlc_title": "Uninstall DLC",
@@ -678,16 +638,13 @@ LANG_EN = {
     "show_logs": "Show Logs",
     "updates_title": "Updates",
     "current_version": "Current Version: v{}",
-    # Unlocker Tab Buttons
     "create_launcher_btn": "2. Create Game Launcher",
     "install_btn": "1. Install Unlocker",
     "uninstall_btn": "3. Uninstall",
-    # Install Success Messages
     "install_success": "✅ DLC Unlocker installed successfully!",
     "location_app": "📍 Location: /Applications/\n   (Finder → Applications)",
     "location_user": "📍 Location: ~/Applications/\n   (Finder → Go → Home → Applications)\n   or search 'DLC Unlocker' in Spotlight (⌘+Space)",
     "important_note": "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\nBEFORE launching the game each time!",
-    # Delete Confirmation Dialog
     "delete_confirm_title": "Confirm",
     "delete_confirm_msg": "Delete {} DLCs?",
     "delete_yes": "Yes",
@@ -758,7 +715,6 @@ LANG_RU = {
     "cat_sp": "Каталоги",
     "cat_kits": "Комплекты",
     "waiting": "В очереди...",
-    # Launcher Localization
     "launcher_title": "Запуск Sims 4",
     "launcher_start_unlocker": "Запуск DLC Unlocker...",
     "launcher_start_game": "Запуск The Sims 4...",
@@ -768,7 +724,6 @@ LANG_RU = {
     "launcher_location": "📍 Расположение:",
     "launcher_finder": "(Finder → Программы / Applications)",
     "launcher_success_msg": "✨ Теперь можно запускать 'Play Sims 4 with DLC.app' для игры!\n   Он автоматически запустит Анлокер + Игру.\n\n💡 Всего ОДИН клик чтобы играть!",
-    # Help Tab
     "help": "Помощь",
     "help_launcher_title": "Вариант 1: Автоматический Лаунчер (Рекомендуем! 💖)",
     "help_launcher_steps": "1. Перейдите во вкладку 'Анлокер'.\n2. Нажмите кнопку 'Создать Лаунчер'.\n3. В ваших Программах появится 'Play Sims 4 with DLC'.\n4. Просто запускайте это приложение, чтобы играть!\n   Оно само запустит всё, что нужно.",
@@ -776,7 +731,6 @@ LANG_RU = {
     "help_manual_steps": "1. Откройте DLC Unlocker - The Sims 4.app.\n2. Убедитесь, что статус Анлокера - 'Установлен'.\n3. НЕ ЗАКРЫВАЙТЕ DLC Unlocker - The Sims 4.app.\n4. Запустите The Sims 4 как обычно (через EA App/Origin).\n5. Играйте с DLC!\n\nВажно: Программа должна быть открыта, пока вы играете.",
     "help_manual_steps": "1. Убедитесь, что статус Анлокера - 'Установлен'.\n2. Откройте DLC Unlocker - The Sims 4.app.\n3. НЕ ЗАКРЫВАЙТЕ DLC Unlocker - The Sims 4.app.\n4. Запустите The Sims 4 как обычно (через EA App/Origin).\n5. Играйте с DLC!\n\nВажно: Программа должна быть открыта, пока вы играете.",
     "help_footer": "Нужна помощь? Заходите в наш Telegram канал!",
-    # Dialogs & Updates
     "download_error_title": "Ошибка загрузки",
     "download_failed_msg": "Ошибка загрузки:\n\n{}",
     "uninstall_dlc_title": "Удаление DLC",
@@ -799,16 +753,13 @@ LANG_RU = {
     "show_logs": "Показать логи",
     "updates_title": "Обновления",
     "current_version": "Текущая версия: v{}",
-    # Unlocker Tab Buttons
     "create_launcher_btn": "2. Создать Лаунчер",
     "install_btn": "1. Установить Анлокер",
     "uninstall_btn": "3. Удалить",
-    # Install Success Messages
     "install_success": "✅ Анлокер установлен успешно!",
     "location_app": "📍 Расположение: /Applications/\n   (Finder → Программы)",
     "location_user": "📍 Расположение: ~/Applications/\n   (Finder → Переход → Домой → Программы)\n   или поиск 'DLC Unlocker' в Spotlight (⌘+Пробел)",
     "important_note": "⚠️ ВАЖНО: Запускайте 'DLC Unlocker - The Sims 4'\nПЕРЕД каждым запуском игры!",
-    # Delete Confirmation Dialog
     "delete_confirm_title": "Подтверждение",
     "delete_confirm_msg": "Удалить {} DLC?",
     "delete_yes": "Да",
@@ -832,7 +783,7 @@ LANG_RU = {
 }
 
 class Localization:
-    current_lang = "ru" # Public class attribute
+    current_lang = "ru"
     _strings = LANG_RU
 
     @classmethod
@@ -849,7 +800,6 @@ class Localization:
 
 class ConfigManager:
     def __init__(self):
-        # ИСПРАВЛЕНО: Используем app data directory вместо CWD
         self.config_file = os.path.join(get_app_data_dir(), "config.json")
         self.config = self.load()
         
@@ -860,7 +810,7 @@ class ConfigManager:
                 with open(self.config_file, "r") as f:
                     loaded_config = json.load(f)
             except:
-                pass # loaded_config remains empty dict on error
+                pass
         
         Localization.set_language(loaded_config.get("language", "ru"))
         return loaded_config
@@ -897,7 +847,6 @@ class SmartDownloader:
                 
                 with requests.get(url, stream=True, headers=headers, timeout=(30, 60)) as r:
                     if r.status_code == 416:
-                        # Already fully downloaded
                         return True, "OK"
                     r.raise_for_status()
                     total_size = int(r.headers.get('content-length', 0))
@@ -914,7 +863,7 @@ class SmartDownloader:
                 return True, "OK"
             except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.ChunkedEncodingError) as e:
                 if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # Exponential backoff: 1s, 2s, 4s
+                    time.sleep(2 ** attempt)
                     continue
                 return False, f"Connection failed after {max_retries} attempts: {str(e)}"
             except Exception as e:
@@ -935,10 +884,8 @@ class Extractor:
     def extract_7z(self, zip_path, out_dir):
         """Extract using 7-Zip (required for multi-volume archives)"""
         
-        # Find 7z on macOS
         sz_paths = []
         
-        # First check bundled 7za (inside PyInstaller bundle)
         if getattr(sys, 'frozen', False):
             app_dir = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
         else:
@@ -947,15 +894,13 @@ class Extractor:
         sz_paths.append(os.path.join(app_dir, "7za"))
         sz_paths.append(os.path.join(app_dir, "7z"))
         
-        # Then check system paths (Homebrew)
         sz_paths.extend([
             "/usr/local/bin/7z",
-            "/opt/homebrew/bin/7z",  # Apple Silicon Homebrew
+            "/opt/homebrew/bin/7z",
             "/usr/local/bin/7za",
             "/opt/homebrew/bin/7za",
         ])
         
-        # Also check via 'which' command
         try:
             result = subprocess.run(['which', '7z'], capture_output=True, text=True)
             if result.returncode == 0 and result.stdout.strip():
@@ -1004,7 +949,6 @@ class DownloadWorker(QObject):
             single_url = self.info.get("url")
             
             if urls and len(urls) > 1:
-                # --- Multi-part (split zip) download ---
                 temp_dir = os.path.join(tempfile.gettempdir(), f"lemon_{self.dlc_id}")
                 os.makedirs(temp_dir, exist_ok=True)
                 
@@ -1019,7 +963,6 @@ class DownloadWorker(QObject):
                     if filename.endswith(".zip"):
                         zip_file = temp_path
                     
-                    # Progress callback scaled to current part
                     part_idx = i
                     parts_total = total_parts
                     def make_cb(pi, pt):
@@ -1039,38 +982,32 @@ class DownloadWorker(QObject):
                         self.finished.emit()
                         return
                 
-                # Extract multi-volume zip using 7-Zip to temp dir first
                 zip_file = next((f for f in downloaded_files if f.endswith(".zip")), None)
                 
                 if not zip_file:
                     success = False
                     msg = "Main .zip file not found"
                 else:
-                    # Step 1: Extract split zip to temp dir
                     extract_dir = os.path.join(temp_dir, "_extracted")
                     os.makedirs(extract_dir, exist_ok=True)
                     success, msg = self.extractor.extract_7z(zip_file, extract_dir)
                     
                     if success:
-                        # Step 2: Check if result is another archive (nested archive)
                         archive_exts = ('.zip', '.rar', '.7z', '.tar', '.gz')
                         nested_archives = []
                         for item in os.listdir(extract_dir):
                             item_path = os.path.join(extract_dir, item)
                             if os.path.isfile(item_path):
-                                # Check extension or large files without extension (like EP21_0)
                                 _, ext = os.path.splitext(item)
                                 if ext.lower() in archive_exts or (not ext and os.path.getsize(item_path) > 100_000_000):
                                     nested_archives.append(item_path)
                         
                         if nested_archives:
-                            # Extract nested archive to game path
                             for nested in nested_archives:
                                 success, msg = self.extractor.extract_7z(nested, self.game_path)
                                 if not success:
                                     break
                         else:
-                            # No nested archive — move extracted files directly to game path
                             for item in os.listdir(extract_dir):
                                 src = os.path.join(extract_dir, item)
                                 dst = os.path.join(self.game_path, item)
@@ -1082,17 +1019,14 @@ class DownloadWorker(QObject):
                                     shutil.move(src, dst)
                 
                 if success:
-                    # Cleanup only on success
                     shutil.rmtree(temp_dir, ignore_errors=True)
                     
-                    # ИСПРАВЛЕНО: Нормализовать структуру для multi-part тоже
                     self._normalize_dlc_structure()
                 else:
                     error_detail = f"[{self.dlc_id}] Extraction failed: {msg}\nTemp files kept at: {temp_dir}"
                     self._log_error(error_detail)
                     self.error_msg.emit(error_detail)
             else:
-                # --- Single file download (original logic) ---
                 url = single_url or (urls[0] if urls else None)
                 temp_path = os.path.join(tempfile.gettempdir(), f"{self.dlc_id}.zip")
                 
@@ -1107,18 +1041,14 @@ class DownloadWorker(QObject):
                     self.finished.emit()
                     return
                 
-                # Extract
                 success, msg = self.extractor.extract_zip(temp_path, self.game_path)
                 
-                # Cleanup
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
             
-            # ИСПРАВЛЕНО: Нормализовать структуру папок (убрать delta/ и т.п.)
             if success:
                 self._normalize_dlc_structure()
             
-            # ИСПРАВЛЕНО: Обновить unlocker config после успешной установки
             if success:
                 self._update_unlocker_config()
                 
@@ -1133,7 +1063,6 @@ class DownloadWorker(QObject):
 
     def _log_error(self, message):
         try:
-            # ИСПРАВЛЕНО: Используем app data directory
             log_dir = os.path.join(get_app_data_dir(), "logs")
             os.makedirs(log_dir, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -1155,26 +1084,21 @@ class DownloadWorker(QObject):
         Это критически важно для работы DLC Unlocker на macOS.
         """
         try:
-            # Импортируем здесь чтобы избежать circular import
             from UnlockerLogic import UnlockerManager
             
             app_path = UnlockerManager.get_unlocker_app_path()
             config_path = os.path.join(app_path, "Contents", "MacOS", "anadius.cfg")
             
-            # Если unlocker не установлен, пропускаем
             if not os.path.exists(config_path):
                 return
             
-            # Определяем путь к установленному DLC
             dlc_path = os.path.join(self.game_path, self.dlc_id)
             if not os.path.exists(dlc_path):
                 return
             
-            # Читаем существующий конфиг
             with open(config_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             
-            # Ищем секцию [DLC_Paths] и добавляем/обновляем путь
             dlc_line = f"{self.dlc_id}={dlc_path}\n"
             in_section = False
             new_lines = []
@@ -1187,11 +1111,9 @@ class DownloadWorker(QObject):
                     in_section = True
                     new_lines.append(line)
                 elif in_section and line.startswith(self.dlc_id):
-                    # Обновляем существующий путь
                     new_lines.append(dlc_line)
                     added = True
                 elif in_section and line.strip().startswith("["):
-                    # Новая секция начинается
                     if not added:
                         new_lines.append(dlc_line)
                         added = True
@@ -1200,24 +1122,20 @@ class DownloadWorker(QObject):
                 else:
                     new_lines.append(line)
             
-            # Если в секции но не добавили до конца файла
             if in_section and not added:
                 new_lines.append(dlc_line)
                 added = True
             
-            # Если секции [DLC_Paths] не было, создаем
             if not section_exists:
                 new_lines.append("\n[DLC_Paths]\n")
                 new_lines.append(dlc_line)
             
-            # Записываем обратно
             with open(config_path, 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
             
             print(f"✅ Updated unlocker config: {self.dlc_id} -> {dlc_path}")
             
         except Exception as e:
-            # Не критичная ошибка, просто логируем
             print(f"⚠️  Could not update unlocker config: {e}")
 
     def _normalize_dlc_structure(self):
@@ -1237,18 +1155,14 @@ class DownloadWorker(QObject):
             
             items = os.listdir(dlc_path)
             
-            # Случай 1: Одна папка которая содержит папку с именем DLC
-            # Пример: SP81/delta/SP81/ → SP81/
             if len(items) == 1 and os.path.isdir(os.path.join(dlc_path, items[0])):
                 inner_folder = os.path.join(dlc_path, items[0])
                 inner_items = os.listdir(inner_folder)
                 
-                # Если внутри только папка с именем DLC
                 if len(inner_items) == 1 and inner_items[0] == self.dlc_id:
                     real_content = os.path.join(inner_folder, self.dlc_id)
                     temp_dir = os.path.join(self.game_path, f"_temp_{self.dlc_id}")
                     
-                    # Перемещаем настоящий контент
                     shutil.move(real_content, temp_dir)
                     shutil.rmtree(dlc_path)
                     shutil.move(temp_dir, dlc_path)
@@ -1256,13 +1170,10 @@ class DownloadWorker(QObject):
                     print(f"✅ Normalized {self.dlc_id}: removed '{items[0]}' wrapper")
                     return
             
-            # Случай 2: Одна папка с контентом DLC внутри
-            # Пример: SP81/SomeFolder/[Data, Delta, *.package]
             if len(items) == 1 and os.path.isdir(os.path.join(dlc_path, items[0])):
                 inner_folder = os.path.join(dlc_path, items[0])
                 inner_items = os.listdir(inner_folder)
                 
-                # Проверка на DLC контент (игнорируем системные папки)
                 dlc_markers = ['.package', 'data', 'delta', '__installer', 
                               'clientdelta', 'clientfull', 'game', 'simulation']
                 
@@ -1278,7 +1189,6 @@ class DownloadWorker(QObject):
                 if has_dlc_content and len(inner_items) > 0:
                     print(f"📦 Flattening {self.dlc_id}/{items[0]}/ structure...")
                     
-                    # Перемещаем все файлы на уровень выше
                     for item in inner_items:
                         if item in ['.', '..', '__MACOSX', '.DS_Store']:
                             continue
@@ -1286,7 +1196,6 @@ class DownloadWorker(QObject):
                         src = os.path.join(inner_folder, item)
                         dst = os.path.join(dlc_path, item)
                         
-                        # Удаляем если уже существует
                         if os.path.exists(dst):
                             if os.path.isdir(dst):
                                 shutil.rmtree(dst)
@@ -1295,20 +1204,16 @@ class DownloadWorker(QObject):
                         
                         shutil.move(src, dst)
                     
-                    # Удаляем теперь пустую папку
                     try:
                         os.rmdir(inner_folder)
                     except:
-                        # Может не быть пустой если остались скрытые файлы
                         shutil.rmtree(inner_folder, ignore_errors=True)
                     
                     print(f"✅ Flattened structure for {self.dlc_id}")
                     
         except Exception as e:
-            # Не критично, просто логируем
             print(f"⚠️  Could not normalize structure for {self.dlc_id}: {e}")
 
-# --- UI COMPONENTS ---
 
 class TitleBar(QFrame):
     def __init__(self, parent):
@@ -1319,14 +1224,12 @@ class TitleBar(QFrame):
         layout.setContentsMargins(10, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Title/Logo
         title = QLabel(f"🍋 Lemon Unlocker")
         title.setStyleSheet(f"font-weight: bold; color: {COLOR_ACCENT}; font-size: 13px;")
         layout.addWidget(title)
         
         layout.addStretch()
         
-        # Window Controls
         self.min_btn = QPushButton("—")
         self.min_btn.setObjectName("min-btn")
         self.min_btn.setFixedSize(45, 32)
@@ -1342,7 +1245,6 @@ class TitleBar(QFrame):
         layout.addWidget(self.min_btn)
         layout.addWidget(self.close_btn)
         
-        # Enable dragging
         self.start = QPoint(0, 0)
         self.pressing = False
 
@@ -1367,7 +1269,7 @@ class Sidebar(QFrame):
     def __init__(self, parent_controller):
         super().__init__()
         self.setObjectName("Sidebar")
-        self.setFixedWidth(240) # Slightly wider
+        self.setFixedWidth(240)
         self.controller = parent_controller
         self.setStyleSheet(f"background-color: {COLOR_BG_DARK}; border-right: 1px solid #1e293b;")
         
@@ -1375,24 +1277,21 @@ class Sidebar(QFrame):
         layout.setContentsMargins(10, 30, 10, 30)
         layout.setSpacing(8)
         
-        # Logo Area
         logo = QLabel("LEMON\nUNLOCKER")
         logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        logo.setStyleSheet(f"font-weight: 900; font-size: 20px; color: {COLOR_TEXT_WHITE}; margin-bottom: 30px; letter-spacing: 1px;") # Smaller to fit
+        logo.setStyleSheet(f"font-weight: 900; font-size: 20px; color: {COLOR_TEXT_WHITE}; margin-bottom: 30px; letter-spacing: 1px;")
         layout.addWidget(logo)
         
-        # Navigation Buttons
         self.buttons = {}
         self.add_nav_btn(Localization.get("dashboard"), "🏠", 0)
-        self.add_nav_btn(Localization.get("library"), "📚", 1)  # Installed
-        self.add_nav_btn(Localization.get("catalog"), "🛒", 2)  # Catalog
+        self.add_nav_btn(Localization.get("library"), "📚", 1)
+        self.add_nav_btn(Localization.get("catalog"), "🛒", 2)
         self.add_nav_btn(Localization.get("unlocker"), "🔓", 3)
         self.add_nav_btn(Localization.get("settings"), "⚙️", 4)
         self.add_nav_btn(Localization.get("help"), "❓", 5)
         
         layout.addStretch()
         
-        # Version
         ver = QLabel(f"v{APP_VERSION}")
         ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
         ver.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 11px; opacity: 0.7;")
@@ -1400,13 +1299,11 @@ class Sidebar(QFrame):
 
     def add_nav_btn(self, text, icon, index):
         btn = QPushButton(f"  {text}")
-        btn.setIcon(QIcon()) # Hack to allow left padding if we used icon
-        # We use text emoji as icon for simplicity
+        btn.setIcon(QIcon())
         btn.setText(f"{icon}   {text}")
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setFixedHeight(45)
         
-        # Base/Inactive Style
         btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
@@ -1419,7 +1316,7 @@ class Sidebar(QFrame):
                 font-weight: 600;
             }}
             QPushButton:hover {{
-                background-color: #1e293b;
+                background-color:
                 color: {COLOR_TEXT_WHITE};
             }}
         """)
@@ -1431,7 +1328,6 @@ class Sidebar(QFrame):
     def set_active(self, index):
         for idx, btn in self.buttons.items():
             if idx == index:
-                # Active Style
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: {COLOR_BG_LIGHT};
@@ -1444,7 +1340,6 @@ class Sidebar(QFrame):
                     }}
                 """)
             else:
-                # Inactive Style
                 btn.setStyleSheet(f"""
                     QPushButton {{
                         background-color: transparent;
@@ -1457,7 +1352,7 @@ class Sidebar(QFrame):
                         font-weight: 600;
                     }}
                     QPushButton:hover {{
-                        background-color: #1e293b;
+                        background-color:
                         color: {COLOR_TEXT_WHITE};
                     }}
                 """)
@@ -1467,41 +1362,35 @@ class DashboardPage(QWidget):
         super().__init__()
         self.parent_window = parent_window
         
-        # Main Layout (contains scroll area)
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Scroll Area
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("background-color: transparent; border: none;")
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         
-        # Scroll Content Widget
         self.scroll_content = QWidget()
         self.scroll_content.setObjectName("DashboardContent")
         self.scroll.setWidget(self.scroll_content)
         
-        # Content Layout
         layout = QVBoxLayout(self.scroll_content)
         layout.setSpacing(20)
         layout.setContentsMargins(40, 40, 40, 40)
         
         main_layout.addWidget(self.scroll)
         
-        # Header
 
         header = QLabel(Localization.get("dashboard"))
         header.setStyleSheet(f"font-size: 32px; font-weight: 800; color: {COLOR_TEXT_WHITE}; letter-spacing: 1px;")
         layout.addWidget(header)
         
-        # 1. Quick Start Guide
         guide_card = QFrame()
         guide_card.setObjectName("GuideCard")
         guide_card.setStyleSheet(f"""
-            QFrame#GuideCard {{
+            QFrame
                 background-color: transparent;
             }}
         """)
@@ -1509,12 +1398,10 @@ class DashboardPage(QWidget):
         guide_layout.setContentsMargins(0, 0, 0, 0)
         guide_layout.setSpacing(15)
         
-        # Guide Title
         title_lbl = QLabel(Localization.get("quick_start") if Localization.get("quick_start") else "Quick Start")
         title_lbl.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 18px; font-weight: 800; letter-spacing: 1px; margin-left: 5px;")
         guide_layout.addWidget(title_lbl)
         
-        # Steps Container (Horizontal)
         steps_layout = QHBoxLayout()
         steps_layout.setSpacing(15)
         
@@ -1531,11 +1418,11 @@ class DashboardPage(QWidget):
                 QFrame {{
                     background-color: {COLOR_BG_LIGHT};
                     border-radius: 16px;
-                    border: 1px solid #334155;
+                    border: 1px solid
                 }}
                 QFrame:hover {{
                     border: 1px solid {COLOR_ACCENT};
-                    background-color: #253349;
+                    background-color:
                     margin-top: -5px; /* Lift effect */
                 }}
             """)
@@ -1545,10 +1432,8 @@ class DashboardPage(QWidget):
             card_layout.setContentsMargins(15, 15, 15, 15)
             card_layout.setSpacing(10)
             
-            # Header Row (Num + Icon)
             h_row = QHBoxLayout()
             
-            # Number Badge
             num_lbl = QLabel(num)
             num_lbl.setFixedSize(24, 24)
             num_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1570,7 +1455,6 @@ class DashboardPage(QWidget):
             
             card_layout.addLayout(h_row)
             
-            # Text
             text_lbl = QLabel(text)
             text_lbl.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 13px; font-weight: 700; background: transparent; border: none;")
             text_lbl.setWordWrap(True)
@@ -1582,7 +1466,6 @@ class DashboardPage(QWidget):
         guide_layout.addLayout(steps_layout)
         layout.addWidget(guide_card)
         
-        # 2. Path Section
         path_card = QFrame()
         path_card.setStyleSheet(f"""
             QFrame {{
@@ -1591,7 +1474,7 @@ class DashboardPage(QWidget):
                 border: 1px solid {COLOR_BG_LIGHT};
             }}
             QFrame:hover {{
-                border: 1px solid #334155;
+                border: 1px solid
             }}
         """)
         path_layout = QHBoxLayout(path_card)
@@ -1615,15 +1498,15 @@ class DashboardPage(QWidget):
         btn_change.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLOR_BG_DARK}; 
-                border: 1px solid #334155; 
+                border: 1px solid
                 padding: 8px 16px; 
                 border-radius: 8px;
                 font-weight: 600;
                 color: {COLOR_TEXT_WHITE};
             }}
             QPushButton:hover {{
-                background-color: #334155;
-                border: 1px solid #475569;
+                background-color:
+                border: 1px solid
             }}
         """)
         btn_change.clicked.connect(self.change_path)
@@ -1633,7 +1516,7 @@ class DashboardPage(QWidget):
         btn_auto.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLOR_BG_DARK}; 
-                border: 1px solid #334155; 
+                border: 1px solid
                 padding: 8px 16px; 
                 border-radius: 8px;
                 font-weight: 600;
@@ -1641,7 +1524,7 @@ class DashboardPage(QWidget):
                 margin-left: 8px;
             }}
             QPushButton:hover {{
-                background-color: #334155;
+                background-color:
                 border: 1px solid {COLOR_ACCENT};
             }}
         """)
@@ -1657,41 +1540,36 @@ class DashboardPage(QWidget):
         
         layout.addWidget(path_card)
         
-        # 3. Stats Row
         stats_row = QHBoxLayout()
         stats_row.setSpacing(20)
         
-        self.stats_card = self.create_stat_card(Localization.get("total_dlcs"), "0 / 0", "#FACC15") # Yellow
-        self.size_card = self.create_stat_card(Localization.get("total_size"), "0 B", "#3B82F6") # Blue
+        self.stats_card = self.create_stat_card(Localization.get("total_dlcs"), "0 / 0", "#FACC15")
+        self.size_card = self.create_stat_card(Localization.get("total_size"), "0 B", "#3B82F6")
         
         stats_row.addWidget(self.stats_card)
         stats_row.addWidget(self.size_card)
         
         layout.addLayout(stats_row)
 
-        # 4. News Feed Card
         self.news_card = QFrame()
         self.news_card.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLOR_BG_LIGHT};
                 border-radius: 16px;
-                border: 1px solid #334155;
+                border: 1px solid
             }}
             QFrame:hover {{
                 border: 1px solid {COLOR_ACCENT};
-                background-color: #1a2236;
+                background-color:
             }}
         """)
         news_layout = QVBoxLayout(self.news_card)
         news_layout.setContentsMargins(25, 25, 25, 25)
         news_layout.setSpacing(15)
         
-        # News Header
         news_header = QHBoxLayout()
         
         lbl_news_title = QLabel(Localization.get("latest_news") if Localization.get("latest_news") else "Latest News") 
-        # Fallback if key missing, though we haven't added it to dict yet. 
-        # Using hardcoded for now or add to dict. Let's stick to "Latest News" or "Updates"
         lbl_news_title.setText("Latest Updates")
         lbl_news_title.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 18px; font-weight: 800; background: transparent; letter-spacing: 0.5px;")
         
@@ -1700,13 +1578,11 @@ class DashboardPage(QWidget):
         
         news_layout.addLayout(news_header)
         
-        # Separator
         sep = QFrame()
         sep.setFixedHeight(1)
         sep.setStyleSheet("background-color: #334155; border: none;")
         news_layout.addWidget(sep)
         
-        # News Content
         self.lbl_news_content = QLabel("Loading updates...")
         self.lbl_news_content.setWordWrap(True)
         self.lbl_news_content.setOpenExternalLinks(True)
@@ -1724,11 +1600,9 @@ class DashboardPage(QWidget):
         layout.addWidget(self.news_card)
         layout.addStretch()
         
-        # Initialize
         self.config = ConfigManager()
         saved_path = self.config.get("game_path")
         
-        # Load News Async
         QTimer.singleShot(1000, self.load_news)
 
         if saved_path:
@@ -1738,8 +1612,6 @@ class DashboardPage(QWidget):
         try:
             version, body, date = Updater.get_latest_news()
             if version:
-                # Better formatting
-                # Badge style for version
                 header_html = f"""
                 <div style='margin-bottom: 10px;'>
                     <span style='background-color: {COLOR_ACCENT}; color: #000; font-weight: bold; padding: 4px 8px; border-radius: 4px;'>v{version}</span>
@@ -1748,10 +1620,7 @@ class DashboardPage(QWidget):
                 <br>
                 """
                 
-                # Simple markdown parsing
-                # bold
-                body = body.replace("**", "") # strip bold for now or replace with <b> if regex
-                # lists
+                body = body.replace("**", "")
                 lines = body.split('\n')
                 formatted_lines = []
                 for line in lines:
@@ -1768,8 +1637,6 @@ class DashboardPage(QWidget):
             else:
                 self.lbl_news_content.setText(Localization.get("no_updates_available"))
         except Exception as e:
-             # self.lbl_news_content.setText(f"Failed to load news: {e}") 
-             # Keep it clean
              self.lbl_news_content.setText("Could not load updates.")
 
     def create_stat_card(self, title, value, color):
@@ -1778,7 +1645,7 @@ class DashboardPage(QWidget):
             QFrame {{
                 background-color: {COLOR_BG_LIGHT};
                 border-radius: 12px;
-                border: 1px solid #334155;
+                border: 1px solid
             }}
             QFrame:hover {{
                 border: 1px solid {color};
@@ -1795,11 +1662,6 @@ class DashboardPage(QWidget):
         val_lbl.setObjectName("ValueLabel")
         val_lbl.setStyleSheet(f"color: {COLOR_TEXT_WHITE}; font-size: 28px; font-weight: 800; background: transparent; border: none; margin-top: 5px;")
         
-        # Color bar indicator at the bottom (or side)
-        # Let's make the value color match the accent color or white? User wants "better".
-        # Let's keep value white but maybe add a colored underline or icon?
-        # User said "remove emojis".
-        # Let's try extensive modern look:
         val_lbl.setStyleSheet(f"color: {color}; font-size: 32px; font-weight: 900; background: transparent; border: none;")
 
         layout.addWidget(title_lbl)
@@ -1820,33 +1682,28 @@ class DashboardPage(QWidget):
             if os.path.exists(packs_dir):
                 return packs_dir
                 
-            # Try to create if doesn't exist
             try:
                 os.makedirs(packs_dir, exist_ok=True)
                 return packs_dir
             except:
-                # Permission denied
                 QMessageBox.critical(self, "Access Denied", 
                     f"Lemon Unlocker cannot create folder:\n{packs_dir}\n\n"
                     "Please create 'The Sims 4 Packs' folder manually next to the game app or check permissions.")
-                return None # Return None strictly so it doesn't set a wrong path
+                return None
                 
         return path
 
     def change_path(self):
         folder = None
         if sys.platform == "darwin":
-            # macOS: Allow selecting .app using getOpenFileName
             folder, _ = QFileDialog.getOpenFileName(self, Localization.get("game_path"), "", "The Sims 4 (*.app);;All Files (*)")
             if not folder:
-                 # Fallback to directory selection
                  folder = QFileDialog.getExistingDirectory(self, Localization.get("game_path"))
         else:
             folder = QFileDialog.getExistingDirectory(self, Localization.get("game_path"))
             
         if folder:
             folder = self._resolve_macos_path(folder)
-            # ИСПРАВЛЕНО: Проверяем что folder не None после resolve
             if folder:
                 self.config.set("game_path", folder)
                 self.config.save()
@@ -1856,7 +1713,6 @@ class DashboardPage(QWidget):
         path = GameDetector.find_game()
         if path:
             path = self._resolve_macos_path(path)
-            # ИСПРАВЛЕНО: Проверяем что path не None после resolve
             if path:
                 self.config.set("game_path", path)
                 self.config.save()
@@ -1872,7 +1728,6 @@ class DashboardPage(QWidget):
         
         if path and os.path.exists(path):
             self.lbl_path_val.setText(path)
-            # Count installed & Size
             installed = 0
             total_size = 0
             try:
@@ -1890,7 +1745,6 @@ class DashboardPage(QWidget):
             self.stats_card.val_lbl.setText(f"{installed} / {total}")
             self.size_card.val_lbl.setText(FileUtils.format_size(total_size))
             
-            # Refresh other pages
             if hasattr(self.parent_window, 'library_page'):
                 self.parent_window.library_page.populate()
             if hasattr(self.parent_window, 'catalog_page'):
@@ -1905,17 +1759,16 @@ class DLCListPage(QWidget):
     def __init__(self, parent_window, mode="installed"):
         super().__init__()
         self.parent_window = parent_window
-        self.mode = mode  # "installed" or "catalog"
+        self.mode = mode
         self.db = DLCDatabase()
-        self.selected_items = set() # Set of dlc_ids
-        self.active_downloads = {} # {dlc_id: (thread, worker)}
-        self.pending_downloads = [] # List of (dlc_id, info, btn)
+        self.selected_items = set()
+        self.active_downloads = {}
+        self.pending_downloads = []
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(20)
         
-        # Header
         header_row = QHBoxLayout()
         title_text = Localization.get("my_library") if mode == "installed" else Localization.get("get_dlcs")
         title = QLabel(title_text)
@@ -1923,7 +1776,6 @@ class DLCListPage(QWidget):
         header_row.addWidget(title)
         header_row.addStretch()
         
-        # Select All Button
         self.btn_select_all = QPushButton(Localization.get("select_all"))
         self.btn_select_all.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_select_all.setCheckable(True)
@@ -1950,7 +1802,6 @@ class DLCListPage(QWidget):
         header_row.addWidget(self.btn_select_all)
         header_row.addSpacing(10)
 
-        # Verify Button (Only in Library)
         if mode == "installed":
              self.btn_verify = QPushButton(Localization.get("verify_files"))
              self.btn_verify.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1959,7 +1810,6 @@ class DLCListPage(QWidget):
              header_row.addWidget(self.btn_verify)
              header_row.addSpacing(10)
         
-        # Refresh Button (both Library and Catalog)
         self.btn_refresh = QPushButton("🔄  " + Localization.get("refresh"))
         self.btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_refresh.setStyleSheet(f"""
@@ -1980,7 +1830,6 @@ class DLCListPage(QWidget):
         header_row.addWidget(self.btn_refresh)
         header_row.addSpacing(10)
         
-        # Integrity Manager
         config = ConfigManager()
         self.integrity_manager = IntegrityManager(config.get("game_path"))
         self.integrity_manager.status_signal.connect(self.on_verify_status)
@@ -1993,7 +1842,7 @@ class DLCListPage(QWidget):
         self.filter_combo.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {COLOR_BG_LIGHT};
-                border: 1px solid #334155;
+                border: 1px solid
                 border-radius: 8px;
                 padding: 8px 12px;
                 color: {COLOR_TEXT_WHITE};
@@ -2007,7 +1856,6 @@ class DLCListPage(QWidget):
         
         layout.addLayout(header_row)
         
-        # Category Filters
         cat_layout = QHBoxLayout()
         cat_layout.setSpacing(10)
         
@@ -2036,7 +1884,6 @@ class DLCListPage(QWidget):
 
         self.update_cat_styles()
         
-        # Scroll Area (RESTORED)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("background: transparent; border: none;")
@@ -2050,7 +1897,6 @@ class DLCListPage(QWidget):
         scroll.setWidget(self.scroll_content)
         layout.addWidget(scroll)
         
-        # Action Bar (Hidden by default)
         self.action_bar = QFrame()
         self.action_bar.setStyleSheet(f"""
             QFrame {{
@@ -2071,11 +1917,10 @@ class DLCListPage(QWidget):
         btn_action = QPushButton()
         btn_action.setCursor(Qt.CursorShape.PointingHandCursor)
         if self.mode == "catalog":
-            btn_action.setText(Localization.get("download_all")) # You might need to add this key or reuse
+            btn_action.setText(Localization.get("download_all"))
             btn_action.setStyleSheet(f"background-color: {COLOR_SUCCESS}; color: white; border-radius: 6px; padding: 6px 16px; font-weight: bold;")
             btn_action.clicked.connect(self.batch_download)
         else:
-            # Uninstall logic not fully implemented yet, maybe just Hide/Remove
             btn_action.setText(Localization.get("uninstall_selected")) 
             btn_action.setStyleSheet(f"background-color: {COLOR_DANGER}; color: white; border-radius: 6px; padding: 6px 16px; font-weight: bold;")
             btn_action.clicked.connect(self.batch_uninstall)
@@ -2092,7 +1937,6 @@ class DLCListPage(QWidget):
         
         layout.addWidget(self.action_bar)
 
-        # Load Data
         QTimer.singleShot(100, self.populate)
         
     def filter_category(self, cat_id):
@@ -2120,7 +1964,7 @@ class DLCListPage(QWidget):
                     border-radius: 16px; 
                     padding: 0 15px; 
                     font-weight: bold;
-                    border: 1px solid #334155;
+                    border: 1px solid
                 """)
 
     def apply_filters(self):
@@ -2132,7 +1976,6 @@ class DLCListPage(QWidget):
                 dlc_id = w.dlc_id.upper()
                 name_match = False
                 
-                # Check Text Filter
                 if text in dlc_id.lower():
                     name_match = True
                 else:
@@ -2142,7 +1985,6 @@ class DLCListPage(QWidget):
                             name_match = True
                             break
                             
-                # Check Category Filter
                 cat_match = False
                 if self.current_category == "ALL":
                     cat_match = True
@@ -2151,8 +1993,6 @@ class DLCListPage(QWidget):
                 elif self.current_category == "GP" and dlc_id.startswith("GP"):
                     cat_match = True
                 elif self.current_category == "SP":
-                    # Stuff packs are SP01-SP19 (approx, lets say < SP20)
-                    # But actually regex is safer or just simple check
                     try:
                         num = int(dlc_id[2:])
                         if dlc_id.startswith("SP") and num < 20: 
@@ -2160,7 +2000,6 @@ class DLCListPage(QWidget):
                     except:
                         pass
                 elif self.current_category == "KIT":
-                     # Kits are SP20+ and FP01
                     if dlc_id.startswith("FP"):
                         cat_match = True
                     elif dlc_id.startswith("SP"):
@@ -2177,8 +2016,6 @@ class DLCListPage(QWidget):
                     w.hide()
         
     def toggle_select_all(self):
-        # Determine target state (Select All or Deselect All)
-        # If button is checked, we want to select all visible
         target_select = self.btn_select_all.isChecked()
         
         if target_select:
@@ -2197,20 +2034,17 @@ class DLCListPage(QWidget):
                         self.toggle_selection(w.dlc_id, w)
 
     def populate(self):
-        # Clear existing
         while self.scroll_layout.count():
             child = self.scroll_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
         
-        # Clear selection on refresh
         self.clear_selection()
                 
         config = ConfigManager()
         game_path = config.get("game_path")
         
         if not game_path or not os.path.exists(game_path):
-            # Show empty state
             lbl = QLabel("Game path not set in Dashboard.")
             lbl.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 16px;")
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -2220,35 +2054,28 @@ class DLCListPage(QWidget):
         db = DLCDatabase()
         dlcs = db.all()
         
-        # Sort by ID (EP first, then GP, then SP)
         sorted_dlcs = sorted(dlcs.items(), key=lambda x: x[0])
         
         for dlc_id, info in sorted_dlcs:
-            # Check installed
             is_installed = False
             target_path = os.path.join(game_path, dlc_id)
             
-            # Use basic check logic
             if os.path.exists(target_path):
-                 # Simple heuristic: acts like installed if folder exists and has content
                  if any(os.scandir(target_path)):
                     is_installed = True
             
-            # Mode filtering
             if self.mode == "installed" and is_installed:
                 size = FileUtils.get_folder_size(target_path)
                 card = self.create_dlc_card(dlc_id, info, is_installed=True, size=size)
                 self.scroll_layout.addWidget(card)
             elif self.mode == "catalog" and not is_installed:
-                size = info.get("size", 0) # This comes from DB if available
+                size = info.get("size", 0)
                 card = self.create_dlc_card(dlc_id, info, is_installed=False, size=size)
                 
-                # Check if it should be in "Waiting" or "Downloading" state
                 if dlc_id in self.active_downloads:
                     btn = card.action_button
                     btn.setEnabled(False)
                     btn.setText("Downloading...")
-                    # Re-connect signals to new button
                     thread, worker = self.active_downloads[dlc_id]
                     worker.progress.connect(lambda p, b=btn: b.setText(f"{int(p)}%") if not sip.isdeleted(b) else None)
                     worker.completed.connect(lambda s, b=btn: self.on_download_complete(s, b) if not sip.isdeleted(b) else None)
@@ -2259,28 +2086,25 @@ class DLCListPage(QWidget):
                 
                 self.scroll_layout.addWidget(card)
         
-        # Re-apply current filters (Search & Category)
         self.apply_filters()
 
     def create_dlc_card(self, dlc_id, info, is_installed, size=0):
-        # Wrapper for clickable
         frame = QFrame()
         frame.setObjectName("DLCCard")
-        frame.dlc_id = dlc_id # Store ID
+        frame.dlc_id = dlc_id
         
-        # Determine Visuals
         bg_color = COLOR_BG_LIGHT
         border_color = "#334155"
         
         frame.setStyleSheet(f"""
-            QFrame#DLCCard {{
+            QFrame
                 background-color: {bg_color};
                 border-radius: 12px;
                 border: 1px solid {border_color};
             }}
-            QFrame#DLCCard:hover {{
+            QFrame
                 border: 1px solid {COLOR_ACCENT};
-                background-color: #253349;
+                background-color:
             }}
         """)
         frame.setFixedHeight(80)
@@ -2289,8 +2113,6 @@ class DLCListPage(QWidget):
         layout.setContentsMargins(20, 10, 20, 10)
         layout.setSpacing(20)
         
-        # Checkbox (Custom) - Logic handled by frame click mainly, but visual indicator needed
-        # We can use a colored strip or an actual QCheckBox
         self.checkbox = QCheckBox()
         self.checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
         self.checkbox.setStyleSheet(f"""
@@ -2310,15 +2132,12 @@ class DLCListPage(QWidget):
                 border-color: {COLOR_ACCENT};
             }}
         """)
-        # We handle click manually to toggle check
         self.checkbox.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         layout.addWidget(self.checkbox)
         
-        # Icon/Type
         type_lbl = QLabel(dlc_id[:2])
         type_lbl.setFixedSize(45, 45)
         type_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # EP = Purple, GP = Blue, SP = Green, FP = Gray
         if "EP" in dlc_id: color = "#A855F7"
         elif "GP" in dlc_id: color = "#3B82F6"
         elif "SP" in dlc_id: color = "#22C55E"
@@ -2327,7 +2146,6 @@ class DLCListPage(QWidget):
         type_lbl.setStyleSheet(f"background-color: {color}; color: white; border-radius: 10px; font-weight: 800; font-size: 16px;")
         layout.addWidget(type_lbl)
         
-        # Info
         info_layout = QVBoxLayout()
         info_layout.setSpacing(4)
         name_lbl = QLabel(info['name'])
@@ -2346,7 +2164,6 @@ class DLCListPage(QWidget):
         
         layout.addStretch()
         
-        # Individual Actions (if not selecting)
         btn = QPushButton()
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
         btn.setFixedHeight(36)
@@ -2367,7 +2184,6 @@ class DLCListPage(QWidget):
                     color: white;
                 }}
             """)
-            # Connect to single download
             btn.clicked.connect(lambda _, id=dlc_id: self.start_download([id]))
         else:
             btn.setText(Localization.get("uninstall"))
@@ -2388,12 +2204,10 @@ class DLCListPage(QWidget):
             btn.clicked.connect(lambda _, id=dlc_id: self.start_uninstall([id]))
             
         layout.addWidget(btn)
-        frame.action_button = btn # Store reference for easy access
+        frame.action_button = btn
         
-        # Frame Click Event
         frame.mousePressEvent = lambda e: self.toggle_selection(dlc_id, frame)
         
-        # Store widgets for updates
         frame.checkbox = self.checkbox
         
         return frame
@@ -2403,23 +2217,22 @@ class DLCListPage(QWidget):
             self.selected_items.remove(dlc_id)
             frame.checkbox.setChecked(False)
             frame.setStyleSheet(f"""
-                QFrame#DLCCard {{
+                QFrame
                     background-color: {COLOR_BG_LIGHT};
                     border-radius: 12px;
-                    border: 1px solid #334155;
+                    border: 1px solid
                 }}
-                QFrame#DLCCard:hover {{
+                QFrame
                     border: 1px solid {COLOR_ACCENT};
-                    background-color: #253349;
+                    background-color:
                 }}
             """)
         else:
             self.selected_items.add(dlc_id)
             frame.checkbox.setChecked(True)
-            # Active selection style
             frame.setStyleSheet(f"""
-                QFrame#DLCCard {{
-                    background-color: #253349;
+                QFrame
+                    background-color:
                     border-radius: 12px;
                     border: 1px solid {COLOR_ACCENT};
                 }}
@@ -2430,24 +2243,22 @@ class DLCListPage(QWidget):
     def clear_selection(self):
         self.selected_items.clear()
         
-        # Reset Select All Button
         self.btn_select_all.setChecked(False)
         self.btn_select_all.setText(Localization.get("select_all"))
         
-        # Visual reset needed - iterate all items
         for i in range(self.scroll_layout.count()):
             w = self.scroll_layout.itemAt(i).widget()
             if w and hasattr(w, "dlc_id"):
                  w.checkbox.setChecked(False)
                  w.setStyleSheet(f"""
-                    QFrame#DLCCard {{
+                    QFrame
                         background-color: {COLOR_BG_LIGHT};
                         border-radius: 12px;
-                        border: 1px solid #334155;
+                        border: 1px solid
                     }}
-                    QFrame#DLCCard:hover {{
+                    QFrame
                         border: 1px solid {COLOR_ACCENT};
-                        background-color: #253349;
+                        background-color:
                     }}
                 """)
         self.update_action_bar()
@@ -2469,14 +2280,13 @@ class DLCListPage(QWidget):
         self.clear_selection()
         
     def start_download(self, dlc_ids):
-        # Download each DLC from the list
         db = DLCDatabase()
         all_dlcs = db.all()
         
         for dlc_id in dlc_ids:
             if dlc_id in all_dlcs:
                 if dlc_id in [d[0] for d in self.pending_downloads] or dlc_id in self.active_downloads:
-                    continue # Already in queue or downloading
+                    continue
                 
                 info = all_dlcs[dlc_id]
                 target_btn = None
@@ -2488,27 +2298,23 @@ class DLCListPage(QWidget):
                         break
                 
                 self.pending_downloads.append((dlc_id, info, target_btn))
-                # Update button style for waiting state
                 if target_btn:
                     target_btn.setEnabled(False)
                     target_btn.setText(Localization.get("waiting") if Localization.get("waiting") else "Waiting...")
             else:
                 print(f"DLC {dlc_id} not found in database")
         
-        # Start processing if nothing is downloading
         self.process_next_download()
 
     def process_next_download(self):
         if self.active_downloads:
-            return # Still downloading something
+            return
             
         if not self.pending_downloads:
-            return # Nothing left to download
+            return
             
-        # Get next
         dlc_id, info, btn = self.pending_downloads.pop(0)
         
-        # Robustly find button again in case it was deleted/re-created during search
         target_btn = btn
         if btn is None or sip.isdeleted(btn):
             for i in range(self.scroll_layout.count()):
@@ -2536,9 +2342,7 @@ class DLCListPage(QWidget):
                 except:
                     pass
             
-            # Refresh
             self.populate()
-            # Notify Dashboard
             if hasattr(self.parent_window, 'dashboard_page'):
                 self.parent_window.dashboard_page.check_stats()
             
@@ -2548,7 +2352,6 @@ class DLCListPage(QWidget):
         self.apply_filters()
 
     def download_dlc(self, dlc_id, info, btn=None):
-        # Check game path
         config = ConfigManager()
         game_path = config.get("game_path")
         if not game_path or not os.path.exists(game_path):
@@ -2556,30 +2359,24 @@ class DLCListPage(QWidget):
             self.parent_window.switch_page(0)
             return
 
-        # Check admin
         if AdminElevator.requires_admin(game_path) and not AdminElevator.is_admin():
             QMessageBox.warning(self, Localization.get("admin_required_title"), Localization.get("admin_required_msg"))
             return
 
-        # Start download
         if btn and not sip.isdeleted(btn):
             btn.setEnabled(False)
             btn.setText("Downloading...")
         
-        # We need a logger
         logger = ImprovedLogger() 
         logger.widget = self.parent_window.unlocker_page.console 
         
-        # Setup downloader
         downloader = SmartDownloader(logger)
         extractor = Extractor(logger)
         
-        # Threaded download
         thread = QThread()
         worker = DownloadWorker(dlc_id, info, game_path, downloader, extractor)
         worker.moveToThread(thread)
         
-        # Keep references to avoid GC
         self.active_downloads[dlc_id] = (thread, worker)
         
         thread.started.connect(worker.run)
@@ -2587,7 +2384,6 @@ class DLCListPage(QWidget):
         worker.finished.connect(worker.deleteLater)
         thread.finished.connect(thread.deleteLater)
         
-        # Cleanup when done - USE thread.finished instead of worker.finished
         thread.finished.connect(lambda d=dlc_id: self.active_downloads.pop(d, None))
         
         if btn:
@@ -2605,18 +2401,15 @@ class DLCListPage(QWidget):
             if btn and not sip.isdeleted(btn):
                 btn.setText(Localization.get("success"))
                 btn.setStyleSheet(f"background-color: {COLOR_BG_DARK}; border: 1px solid {COLOR_SUCCESS}; color: {COLOR_SUCCESS};")
-            # Refresh lists
             QTimer.singleShot(1000, self.refresh_all_lists)
         else:
             if btn and not sip.isdeleted(btn):
                 btn.setText(Localization.get("error") + " ⓘ")
                 btn.setEnabled(True)
                 btn.setStyleSheet(f"background-color: {COLOR_BG_DARK}; border: 1px solid {COLOR_DANGER}; color: {COLOR_DANGER};")
-                # Tooltip with error details (set by error_msg signal)
                 if not btn.toolTip():
                     btn.setToolTip(Localization.get("download_failed_msg").format("See logs"))
         
-        # Whether success or failure, try to process next in queue
         QTimer.singleShot(500, self.process_next_download)
 
     def on_download_error(self, error_msg):
@@ -2683,7 +2476,6 @@ class DLCListPage(QWidget):
                      else:
                          widget.integrity_icon.setText(icon)
                      
-                     # Enable "Repair"
                      if status_code in [1, 2]:
                          if hasattr(widget, 'action_button'):
                              btn = widget.action_button
@@ -2693,8 +2485,6 @@ class DLCListPage(QWidget):
                              except: pass
                              
                              info = self.db.get_by_id(dlc_id)
-                             # Re-connect to download
-                             # We use a separate method or lambda
                              btn.clicked.connect(lambda checked, d=dlc_id, inf=info, b=btn: self.download_dlc(d, inf, b))
                              btn.setEnabled(True)
                      break
@@ -2705,7 +2495,6 @@ class DLCListPage(QWidget):
         QMessageBox.information(self, Localization.get("verification_title"), Localization.get("verification_complete"))
 
     def refresh_all_lists(self):
-        # Refresh both Library and Catalog
         self.parent_window.library_page.populate()
         self.parent_window.catalog_page.populate()
         self.parent_window.dashboard_page.check_stats()
@@ -2715,13 +2504,11 @@ class DLCListPage(QWidget):
         self.btn_refresh.setEnabled(False)
         self.btn_refresh.setText("🔄  ...")
         
-        # Use a short timer so the UI updates before blocking scan
         QTimer.singleShot(50, self._do_refresh)
     
     def _do_refresh(self):
         try:
             self.populate()
-            # Also refresh the other page and dashboard
             if self.mode == "installed":
                 self.parent_window.catalog_page.populate()
             else:
@@ -2740,20 +2527,17 @@ class UnlockerPage(QWidget):
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(25)
         
-        # Header
         header = QLabel(Localization.get("unlocker"))
         header.setStyleSheet(f"font-size: 32px; font-weight: 800; color: {COLOR_TEXT_WHITE}; letter-spacing: 1px;")
         layout.addWidget(header)
         
-        # Status Card
         self.status_card = QFrame()
         self.status_card.setObjectName("UnlockerStatusCard")
-        # Base style, color updated in update_status
         self.status_card.setStyleSheet(f"""
-            QFrame#UnlockerStatusCard {{
+            QFrame
                 background-color: {COLOR_BG_LIGHT};
                 border-radius: 16px;
-                border: 1px solid #334155;
+                border: 1px solid
             }}
         """)
         self.status_card.setFixedHeight(100)
@@ -2783,23 +2567,18 @@ class UnlockerPage(QWidget):
         
         layout.addWidget(self.status_card)
         
-        # Actions Row
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(20)
         
-        # Actions Row
         actions_layout = QHBoxLayout()
         actions_layout.setSpacing(20)
         
-        # 1. Install (Green)
         self.btn_install = self.create_action_card("🚀", Localization.get("install_btn"), "#22C55E")
         self.btn_install.clicked.connect(self.install_unlocker)
         
-        # 2. Create Launcher (Purple)
         self.btn_launcher = self.create_action_card("🎮", Localization.get("create_launcher_btn"), "#8B5CF6")
         self.btn_launcher.clicked.connect(self.create_launcher)
         
-        # 3. Uninstall (Red)
         self.btn_uninstall = self.create_action_card("🗑️", Localization.get("uninstall_btn"), "#EF4444")
         self.btn_uninstall.clicked.connect(self.uninstall_unlocker)
         
@@ -2809,7 +2588,6 @@ class UnlockerPage(QWidget):
         
         layout.addLayout(actions_layout)
         
-        # Launch Game Button (shown when launcher exists)
         self.btn_launch_game = QPushButton(Localization.get("launch_game"))
         self.btn_launch_game.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_launch_game.setFixedHeight(55)
@@ -2817,7 +2595,7 @@ class UnlockerPage(QWidget):
         self.btn_launch_game.setStyleSheet(f"""
             QPushButton {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #8B5CF6, stop:1 #6366F1);
+                    stop:0
                 color: white;
                 border-radius: 14px;
                 font-size: 18px;
@@ -2827,31 +2605,29 @@ class UnlockerPage(QWidget):
             }}
             QPushButton:hover {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #A78BFA, stop:1 #818CF8);
+                    stop:0
             }}
             QPushButton:pressed {{
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #7C3AED, stop:1 #4F46E5);
+                    stop:0
             }}
         """)
         self.btn_launch_game.clicked.connect(self.launch_game)
-        self.btn_launch_game.hide()  # Hidden by default, shown in update_status
+        self.btn_launch_game.hide()
         layout.addWidget(self.btn_launch_game)
         
-        # Info text
         info_lbl = QLabel(Localization.get("unlocker_info"))
         info_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_lbl.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 14px; margin-top: 10px; font-style: italic;")
         layout.addWidget(info_lbl)
         
-        # Console/Log Area
         self.console = QTextEdit()
         self.console.setReadOnly(True)
         self.console.setStyleSheet(f"""
             QTextEdit {{
-                background-color: #0f172a;
-                color: #cbd5e1;
-                border: 1px solid #334155;
+                background-color:
+                color:
+                border: 1px solid
                 font-family: Consolas, monospace;
                 font-size: 12px;
                 padding: 10px;
@@ -2861,7 +2637,6 @@ class UnlockerPage(QWidget):
         self.console.setFixedHeight(150)
         self.console.hide() 
         
-        # Show logs button
         self.btn_logs = QPushButton(Localization.get("show_logs"))
         self.btn_logs.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_logs.setCheckable(True)
@@ -2880,7 +2655,7 @@ class UnlockerPage(QWidget):
             self.lbl_status_val.setText(Localization.get("status_installed"))
             self.status_icon.setText("✅")
             self.status_card.setStyleSheet(f"""
-                QFrame#UnlockerStatusCard {{
+                QFrame
                     background-color: {COLOR_BG_LIGHT};
                     border-radius: 16px;
                     border: 1px solid {COLOR_SUCCESS};
@@ -2888,27 +2663,23 @@ class UnlockerPage(QWidget):
             """)
             self.lbl_status_val.setStyleSheet(f"color: {COLOR_SUCCESS}; font-size: 20px; font-weight: 800; background: transparent;")
             
-            # Smart UI: Unlocker Installed
-            # Show "Create Launcher" (Purple) as main action
             self.btn_install.setVisible(False)
             self.btn_launcher.setVisible(True)
             self.btn_uninstall.setVisible(True)
             
-            # Check if game launcher exists → show Launch Game button
             launcher_exists = self._check_launcher_exists()
             self.btn_launch_game.setVisible(launcher_exists)
             
-            # Make Launcher button big and glowing
             self.btn_launcher.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {COLOR_BG_LIGHT};
-                    border: 2px solid #8B5CF6;
+                    border: 2px solid
                     border-radius: 16px;
                     text-align: center;
                 }}
                 QPushButton:hover {{
-                    background-color: #8B5CF620;
-                    border: 2px solid #A78BFA;
+                    background-color:
+                    border: 2px solid
                 }}
             """)
             
@@ -2916,7 +2687,7 @@ class UnlockerPage(QWidget):
             self.lbl_status_val.setText(Localization.get("status_not_installed"))
             self.status_icon.setText("❌")
             self.status_card.setStyleSheet(f"""
-                QFrame#UnlockerStatusCard {{
+                QFrame
                     background-color: {COLOR_BG_LIGHT};
                     border-radius: 16px;
                     border: 1px solid {COLOR_DANGER};
@@ -2924,14 +2695,11 @@ class UnlockerPage(QWidget):
             """)
             self.lbl_status_val.setStyleSheet(f"color: {COLOR_DANGER}; font-size: 20px; font-weight: 800; background: transparent;")
             
-            # Smart UI: Unlocker NOT Installed
-            # Show "Install" (Green) as main action
             self.btn_install.setVisible(True)
             self.btn_launcher.setVisible(False)
             self.btn_uninstall.setVisible(False)
             self.btn_launch_game.setVisible(False)
             
-            # Make Install button big
             self.btn_install.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {COLOR_BG_LIGHT};
@@ -2951,7 +2719,7 @@ class UnlockerPage(QWidget):
         btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLOR_BG_LIGHT};
-                border: 1px solid #334155;
+                border: 1px solid
                 border-radius: 16px;
                 text-align: center;
             }}
@@ -2980,16 +2748,13 @@ class UnlockerPage(QWidget):
         return btn
 
     def install_unlocker(self):
-        # Ensure we catch ANY crash
         try:
-            # macOS: no admin required for installing to ~/Applications
 
             self.console.setVisible(True)
             self.btn_logs.setChecked(True)
-            self.parent_window.logger.widget = self.console # Redirect logs
+            self.parent_window.logger.widget = self.console
             self.parent_window.logger.log("Starting installation...", "INFO")
 
-            # Localized strings for the installer logic
             loc_strings = {
                 "install_success": Localization.get("install_success"),
                 "location_app": Localization.get("location_app"),
@@ -3007,7 +2772,6 @@ class UnlockerPage(QWidget):
                 QMessageBox.critical(self, Localization.get("error"), msg)
                 
             self.update_status()
-            # Sync Dashboard
             self.parent_window.dashboard_page.check_stats()
             
         except Exception as e:
@@ -3021,7 +2785,6 @@ class UnlockerPage(QWidget):
             self.btn_logs.setChecked(True)
             self.parent_window.logger.widget = self.console
             
-            # Get game path from main config
             game_path = self.parent_window.config.get("game_path")
             
             success, msg = UnlockerManager.update_sims4_config(self.parent_window.logger, game_path)
@@ -3042,10 +2805,8 @@ class UnlockerPage(QWidget):
             self.btn_logs.setChecked(True)
             self.parent_window.logger.widget = self.console
             
-            # Get game path from main config
             game_path = self.parent_window.config.get("game_path")
 
-            # Prepare localized strings
             loc_strings = {
                 "launcher_title": Localization.get("launcher_title"),
                 "launcher_start_unlocker": Localization.get("launcher_start_unlocker"),
@@ -3073,7 +2834,6 @@ class UnlockerPage(QWidget):
                     msg,
                     QMessageBox.StandardButton.Ok
                 )
-                # Refresh status to show Launch Game button
                 self.update_status()
             else:
                 self.parent_window.logger.log(msg, "ERROR")
@@ -3114,13 +2874,11 @@ class UnlockerPage(QWidget):
             self.btn_launch_game.setEnabled(False)
             self.btn_launch_game.setText(Localization.get("game_launching"))
             
-            # Open the launcher app
             subprocess.Popen(['open', launcher_path])
             
             self.parent_window.logger.widget = self.console
             self.parent_window.logger.log(f"Launched game via: {launcher_path}", "SUCCESS")
             
-            # Re-enable button after a short delay
             QTimer.singleShot(3000, lambda: self._reset_launch_button())
             
         except Exception as e:
@@ -3133,9 +2891,7 @@ class UnlockerPage(QWidget):
         self.btn_launch_game.setText(Localization.get("launch_game"))
 
     def uninstall_unlocker(self):
-        # Use new method
         try:
-            # macOS: no admin required for ~/Applications
                 
             self.console.setVisible(True)
             self.btn_logs.setChecked(True)
@@ -3152,7 +2908,6 @@ class UnlockerPage(QWidget):
                 QMessageBox.critical(self, Localization.get("error"), msg)
                 
             self.update_status()
-            # Sync Dashboard
             self.parent_window.dashboard_page.check_stats()
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
@@ -3168,10 +2923,7 @@ class Updater:
                 data = resp.json()
                 remote_ver = data.get("tag_name", "").lstrip("v")
                 
-                # Simple string compare for now since formats might vary
-                # Ideally use packaging.version but keeping deps minimal
                 if remote_ver != APP_VERSION:
-                    # Find asset
                     download_url = None
                     assets = data.get("assets", [])
                     for asset in assets:
@@ -3189,14 +2941,13 @@ class Updater:
     @staticmethod
     def get_latest_news():
         try:
-            # Reusing the repo URL
             url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-            resp = requests.get(url, timeout=3) # Short timeout
+            resp = requests.get(url, timeout=3)
             if resp.status_code == 200:
                 data = resp.json()
                 tag = data.get("tag_name", "Unknown")
                 body = data.get("body", "No details.")
-                published = data.get("published_at", "")[:10] # YYYY-MM-DD
+                published = data.get("published_at", "")[:10]
                 return tag, body, published
         except:
             pass
@@ -3227,7 +2978,6 @@ class Updater:
             current_exe = sys.argv[0]
             shell_script = tempfile.mktemp(suffix=".sh")
             
-            # Script to wait, move file, and restart
             script_content = f"""#!/bin/bash
 sleep 2
 mv -f "{new_exe_path}" "{current_exe}"
@@ -3255,13 +3005,10 @@ class HelpPage(QWidget):
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(25)
         
-        # Header
         header = QLabel(Localization.get("help"))
         header.setStyleSheet(f"font-size: 32px; font-weight: 800; color: {COLOR_TEXT_WHITE}; letter-spacing: 1px;")
         layout.addWidget(header)
         
-        # Content Layout (Scrollable if needed, but we'll try to fit in)
-        # Using a ScrollArea is safer for small screens
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setStyleSheet("background: transparent; border: none;")
@@ -3269,9 +3016,8 @@ class HelpPage(QWidget):
         content_widget = QWidget()
         content_layout = QVBoxLayout(content_widget)
         content_layout.setSpacing(20)
-        content_layout.setContentsMargins(0, 0, 20, 0) # Right margin for scrollbar
+        content_layout.setContentsMargins(0, 0, 20, 0)
         
-        # --- Option 1: Launcher ---
         grp_launcher = QFrame()
         grp_launcher.setStyleSheet(f"""
             QFrame {{
@@ -3296,13 +3042,12 @@ class HelpPage(QWidget):
         
         content_layout.addWidget(grp_launcher)
         
-        # --- Option 2: Manual ---
         grp_manual = QFrame()
         grp_manual.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLOR_BG_LIGHT};
                 border-radius: 16px;
-                border: 1px solid #334155;
+                border: 1px solid
             }}
         """)
         m_layout = QVBoxLayout(grp_manual)
@@ -3320,7 +3065,6 @@ class HelpPage(QWidget):
         
         content_layout.addWidget(grp_manual)
         
-        # --- Footer ---
         footer_layout = QHBoxLayout()
         footer_layout.addStretch()
         
@@ -3351,7 +3095,6 @@ class SettingsPage(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
-        # Clear existing layout if any (for refresh)
         if self.layout():
             QWidget().setLayout(self.layout())
             
@@ -3359,25 +3102,22 @@ class SettingsPage(QWidget):
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(25)
         
-        # Header
         header = QLabel(Localization.get("settings"))
         header.setStyleSheet(f"font-size: 32px; font-weight: 800; color: {COLOR_TEXT_WHITE}; letter-spacing: 1px;")
         layout.addWidget(header)
 
-        # Container for settings
         container = QFrame()
         container.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLOR_BG_LIGHT};
                 border-radius: 16px;
-                border: 1px solid #334155;
+                border: 1px solid
             }}
         """)
         container_layout = QVBoxLayout(container)
         container_layout.setContentsMargins(30, 30, 30, 30)
         container_layout.setSpacing(20)
 
-        # --- Language Section ---
         lang_lbl = QLabel(Localization.get("language"))
         lang_lbl.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 14px; font-weight: 600; background: transparent; border: none;")
         
@@ -3388,7 +3128,7 @@ class SettingsPage(QWidget):
         self.combo_lang.setStyleSheet(f"""
             QComboBox {{
                 background-color: {COLOR_BG_DARK};
-                border: 1px solid #475569;
+                border: 1px solid
                 border-radius: 8px;
                 padding: 5px 15px;
                 color: {COLOR_TEXT_WHITE};
@@ -3411,7 +3151,7 @@ class SettingsPage(QWidget):
                 color: {COLOR_TEXT_WHITE};
                 selection-background-color: {COLOR_ACCENT};
                 selection-color: black;
-                border: 1px solid #475569;
+                border: 1px solid
             }}
         """)
         
@@ -3427,14 +3167,12 @@ class SettingsPage(QWidget):
         self.lbl_restart.setVisible(False)
         container_layout.addWidget(self.lbl_restart)
         
-        # Divider
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         line.setFrameShadow(QFrame.Shadow.Sunken)
         line.setStyleSheet("background-color: #334155; border: none; max-height: 1px;")
         container_layout.addWidget(line)
 
-        # --- Update Section ---
         update_title = QLabel(Localization.get("updates_title"))
         update_title.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 14px; font-weight: 600; background: transparent; border: none;")
         container_layout.addWidget(update_title)
@@ -3468,7 +3206,6 @@ class SettingsPage(QWidget):
         
         container_layout.addLayout(update_row)
 
-        # Divider 2
         line2 = QFrame()
         line2.setFrameShape(QFrame.Shape.HLine)
         line2.setFrameShadow(QFrame.Shadow.Sunken)
@@ -3476,12 +3213,10 @@ class SettingsPage(QWidget):
         container_layout.addWidget(line2)
         
         
-        # --- About Section (Inside Card) ---
         about_title = QLabel(Localization.get("about"))
         about_title.setStyleSheet(f"color: {COLOR_TEXT_GRAY}; font-size: 14px; font-weight: 600; background: transparent; border: none;")
         container_layout.addWidget(about_title)
         
-        # Info Row
         info_row = QHBoxLayout()
         
         app_logo = QLabel("🍋")
@@ -3504,17 +3239,16 @@ class SettingsPage(QWidget):
         
         container_layout.addLayout(info_row)
         
-        # Links
         links_layout = QHBoxLayout()
         links_layout.setSpacing(15)
         
         btn_channel = QPushButton(Localization.get("telegram_channel"))
         btn_channel.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_channel.setIcon(QIcon()) # Hack for padding
+        btn_channel.setIcon(QIcon())
         btn_channel.setText("📢  " + Localization.get("telegram_channel"))
         btn_channel.setStyleSheet(f"""
             QPushButton {{
-                background-color: #229ED9; 
+                background-color:
                 color: white; 
                 border-radius: 8px; 
                 padding: 10px 20px; 
@@ -3522,7 +3256,7 @@ class SettingsPage(QWidget):
                 border: none;
                 font-size: 13px;
             }}
-            QPushButton:hover {{ background-color: #1A7BB0; }}
+            QPushButton:hover {{ background-color:
         """)
         btn_channel.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://t.me/lemon4elosimshub")))
         
@@ -3531,7 +3265,7 @@ class SettingsPage(QWidget):
         btn_chat.setText("💬  " + Localization.get("telegram_chat"))
         btn_chat.setStyleSheet(f"""
             QPushButton {{
-                background-color: #2AABEE; 
+                background-color:
                 color: white; 
                 border-radius: 8px; 
                 padding: 10px 20px; 
@@ -3539,7 +3273,7 @@ class SettingsPage(QWidget):
                 border: none;
                 font-size: 13px;
             }}
-            QPushButton:hover {{ background-color: #229ED9; }}
+            QPushButton:hover {{ background-color:
         """)
         btn_chat.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://t.me/+euBeCOkQDIdmNGJi")))
         
@@ -3592,14 +3326,11 @@ class SettingsPage(QWidget):
 class LemonWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        # Initialize Config
         self.config = ConfigManager()
         
-        # macOS: use native title bar instead of FramelessWindowHint
         self.setWindowTitle("Lemon Unlocker")
         self.resize(1000, 700)
         
-        # App Icon
         base_path = UnlockerManager.get_base_path()
         icon_path = os.path.join(base_path, "icon.png")
         if os.path.exists(icon_path):
@@ -3609,29 +3340,23 @@ class LemonWindow(QMainWindow):
         self.central_widget.setObjectName("Central")
         self.setCentralWidget(self.central_widget)
         
-        # Main Layout
         self.main_layout = QHBoxLayout(self.central_widget)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
         
-        # Sidebar
         self.sidebar = Sidebar(self)
         self.main_layout.addWidget(self.sidebar)
         
-        # Content Area
         self.content_area = QWidget()
         self.content_area.setStyleSheet(f"background-color: {COLOR_BG_DARK}; border-top-left-radius: 20px; border-bottom-left-radius: 20px;")
         
-        # Right Side Layout (Pages only, using native macOS title bar)
         self.right_layout = QVBoxLayout(self.content_area)
         self.right_layout.setContentsMargins(0, 0, 0, 0)
         self.right_layout.setSpacing(0)
         
-        # Pages Stack
         self.pages = QStackedWidget()
         self.right_layout.addWidget(self.pages)
         
-        # Add Pages
         self.dashboard_page = DashboardPage(self)
         self.library_page = DLCListPage(self, mode="installed")
         self.catalog_page = DLCListPage(self, mode="catalog")
@@ -3639,19 +3364,17 @@ class LemonWindow(QMainWindow):
         self.settings_page = SettingsPage(self)
         self.help_page = HelpPage(self)
         
-        self.pages.addWidget(self.dashboard_page) # 0
-        self.pages.addWidget(self.library_page)   # 1
-        self.pages.addWidget(self.catalog_page)   # 2
-        self.pages.addWidget(self.unlocker_page)  # 3
-        self.pages.addWidget(self.settings_page)  # 4
-        self.pages.addWidget(self.help_page)      # 5
+        self.pages.addWidget(self.dashboard_page)
+        self.pages.addWidget(self.library_page)
+        self.pages.addWidget(self.catalog_page)
+        self.pages.addWidget(self.unlocker_page)
+        self.pages.addWidget(self.settings_page)
+        self.pages.addWidget(self.help_page)
 
         self.main_layout.addWidget(self.content_area)
         
-        # Apply Styles
         self.setStyleSheet(STYLE_SHEET)
         
-        # Init
         self.logger = ImprovedLogger()
         self.switch_page(0)
 
@@ -3660,24 +3383,18 @@ class LemonWindow(QMainWindow):
         self.sidebar.set_active(index)
 
 if __name__ == "__main__":
-    # Install crash handler
     CrashHandler.install()
     
     app = QApplication(sys.argv)
     
-    # ---------------------------------------------------------
-    # CI/CD SMOKE TEST w/ SCREENSHOT
-    # ---------------------------------------------------------
     if "--test-launch" in sys.argv:
         try:
             print("LemonUnlocker: Initializing window for smoke test...")
             window = LemonWindow()
             window.show()
             
-            # Process events to ensure UI is rendered
             app.processEvents()
             
-            # Take screenshot
             import os
             screenshot_path = os.path.join(os.getcwd(), "test_launch_screenshot.png")
             if window.grab().save(screenshot_path):

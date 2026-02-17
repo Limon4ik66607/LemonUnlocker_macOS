@@ -3,14 +3,13 @@ import sys
 import shutil
 import subprocess
 import time
-import shlex  # ИСПРАВЛЕНО: Добавлен для правильного экранирования команд
-import tempfile  # НОВОЕ: Для создания временных файлов в create_game_launcher
+import shlex
+import tempfile
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QMessageBox
 from PyQt6.QtCore import Qt
 
 
 class AdminElevator:
-    """macOS admin helper — uses osascript for privilege escalation."""
 
     @staticmethod
     def is_admin():
@@ -32,16 +31,10 @@ class AdminElevator:
 
     @staticmethod
     def elevate():
-        """Re-launch current script with admin via osascript (AppleScript)."""
         try:
             exe = sys.executable
-            # ИСПРАВЛЕНО: Правильное экранирование аргументов для shell
             args = " ".join([shlex.quote(a) for a in sys.argv])
-            
-            # ИСПРАВЛЕНО: Правильное экранирование для AppleScript
             script = f'do shell script "{exe} {args}" with administrator privileges'
-            
-            # ИСПРАВЛЕНО: Используем список аргументов вместо shell=True для безопасности
             subprocess.run(['osascript', '-e', script], check=True)
             sys.exit(0)
         except Exception as e:
@@ -49,11 +42,8 @@ class AdminElevator:
             return False
 
 
-# НОВОЕ: Легкий ConfigManager для чтения конфига в UnlockerLogic
 class ConfigManager:
-    """Lightweight config reader for accessing game path"""
     def __init__(self):
-        # Определяем путь к конфигу (такой же как в основном приложении)
         if sys.platform == "darwin":
             base = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "LemonUnlocker")
         elif sys.platform == "win32":
@@ -91,61 +81,34 @@ class ConfigManager:
 
 
 class UnlockerManager:
-    """
-    macOS Unlocker Manager.
-    
-    On Mac the DLC Unlocker works differently from Windows:
-    - Instead of copying version.dll, we create a .app bundle
-      (DLC Unlocker - The Sims 4.app) with the unlocker binary,
-      dylibs and config files.
-    - The user must run the DLC Unlocker app BEFORE launching the game
-      each time they want to play.
-    """
 
     @staticmethod
     def get_base_path():
-        """Return the base path where bundled data files live."""
         if getattr(sys, 'frozen', False):
             return sys._MEIPASS
         return os.path.dirname(os.path.abspath(__file__))
 
     @staticmethod
     def get_unlocker_app_path():
-        """
-        Return the path where we'll create the DLC Unlocker .app bundle.
-        
-        ИСПРАВЛЕНО: Приоритет установки:
-        1. /Applications/ (системная, видна всем) - ПРЕДПОЧТИТЕЛЬНО
-        2. ~/Applications/ (пользовательская) - FALLBACK
-        
-        Это решает проблему когда пользователи не могут найти DLC Unlocker,
-        так как он устанавливается в ~/Applications/ вместо видимой /Applications/
-        """
         app_name = "DLC Unlocker - The Sims 4.app"
-        
-        # Приоритет 1: Системная папка /Applications/ (видна в Finder → Программы)
         system_apps = "/Applications"
         
-        # Проверка: есть ли права на запись?
         if os.access(system_apps, os.W_OK):
             print(f"✅ Installing to {system_apps} (system-wide)")
             return os.path.join(system_apps, app_name)
         
-        # Проверка: можем ли получить права через osascript?
         try:
             test_file = os.path.join(system_apps, ".lemon_test")
-            # Пытаемся создать тестовый файл с правами администратора
             cmd = f'do shell script "touch \\"{test_file}\\"" with administrator privileges'
             
             result = subprocess.run(
                 ['osascript', '-e', cmd],
                 capture_output=True,
-                timeout=60,  # Даем 60 сек на ввод пароля
+                timeout=60,
                 text=True
             )
             
             if result.returncode == 0:
-                # Успешно получили права! Удаляем тестовый файл
                 try:
                     subprocess.run(
                         ['osascript', '-e', f'do shell script "rm \\"{test_file}\\"" with administrator privileges'],
@@ -163,17 +126,14 @@ class UnlockerManager:
         except Exception as e:
             print(f"⚠️  Could not get admin access: {e}")
         
-        # Fallback: пользовательская папка ~/Applications/
         home = os.path.expanduser("~")
         home_apps = os.path.join(home, "Applications")
         
-        # ИСПРАВЛЕНО: Добавлена обработка ошибок создания директории
         if not os.path.exists(home_apps):
             try:
                 os.makedirs(home_apps, exist_ok=True)
                 print(f"ℹ️  Created user Applications folder: {home_apps}")
             except Exception as e:
-                # Если не можем создать нигде - это критическая ошибка
                 raise PermissionError(
                     "Cannot create DLC Unlocker. No write access to:\n"
                     f"- {system_apps} (system Applications)\n"
@@ -188,7 +148,6 @@ class UnlockerManager:
 
     @staticmethod
     def check_status():
-        """Check if the DLC Unlocker .app bundle exists."""
         app_path = UnlockerManager.get_unlocker_app_path()
         unlocker_bin = os.path.join(app_path, "Contents", "MacOS", "unlocker")
         return os.path.exists(unlocker_bin)
@@ -200,7 +159,6 @@ class UnlockerManager:
         Create the DLC Unlocker .app bundle for The Sims 4.
         This replicates what 'prepare DLC Unlockers' bash script does.
         """
-        # Default strings if not provided
         if not loc_strings:
             loc_strings = {
                 "install_success": "✅ DLC Unlocker installed successfully!",
@@ -209,7 +167,6 @@ class UnlockerManager:
                 "important_note": "⚠️ IMPORTANT: Run 'DLC Unlocker - The Sims 4' app\nBEFORE launching the game each time!"
             }
 
-        # Kill EA processes first
         killed_processes = []
         processes_to_kill = ['EADesktop', 'EA Desktop', 'Origin']
         
@@ -234,10 +191,8 @@ class UnlockerManager:
         base_dir = UnlockerManager.get_base_path()
         unlocker_src = os.path.join(base_dir, "unlocker_mac", "files")
 
-        # ИСПРАВЛЕНО: Проверка существования директории с исходниками с fallback
         if not os.path.exists(unlocker_src):
             logger.log(f"Primary source path not found: {unlocker_src}", "WARNING")
-            # Попробовать альтернативные пути
             alt_paths = [
                 os.path.join(base_dir, "files"),
                 os.path.join(base_dir, "unlocker_mac"),
@@ -258,7 +213,6 @@ class UnlockerManager:
                     f"Please ensure unlocker files are included in the app bundle."
                 )
 
-        # Verify source files exist
         required_files = ["unlocker", "anadius.dylib", "thesims4.cfg"]
         missing_files = []
         for fname in required_files:
@@ -268,7 +222,6 @@ class UnlockerManager:
         if missing_files:
             return False, f"Required files missing: {', '.join(missing_files)}\nSource: {unlocker_src}"
 
-        # ИСПРАВЛЕНО: Обработка ошибок при получении пути к app
         try:
             app_path = UnlockerManager.get_unlocker_app_path()
         except PermissionError as e:
@@ -277,13 +230,11 @@ class UnlockerManager:
         bundle_path = os.path.join(app_path, "Contents", "MacOS")
 
         try:
-            # ИСПРАВЛЕНО: Create .app bundle structure с проверкой прав
             try:
                 os.makedirs(bundle_path, exist_ok=True)
             except Exception as e:
                 return False, f"Cannot create app bundle directory (permission denied): {bundle_path}\n\n{str(e)}"
 
-            # ИСПРАВЛЕНО: Проверка прав на запись
             if not os.access(bundle_path, os.W_OK):
                 return False, (
                     f"No write permission to: {bundle_path}\n\n"
@@ -293,41 +244,35 @@ class UnlockerManager:
             
             logger.log(f"Creating .app bundle at: {app_path}")
 
-            # Copy unlocker binary
             src = os.path.join(unlocker_src, "unlocker")
             dst = os.path.join(bundle_path, "unlocker")
             shutil.copy2(src, dst)
-            os.chmod(dst, 0o755)  # Make executable
+            os.chmod(dst, 0o755)
             logger.log("Copied unlocker binary")
 
-            # Copy anadius.dylib
             shutil.copy2(
                 os.path.join(unlocker_src, "anadius.dylib"),
                 os.path.join(bundle_path, "anadius.dylib")
             )
             logger.log("Copied anadius.dylib")
 
-            # Copy optional dylibs
             for dylib in ["anadius_online.dylib", "ts4_config_update.dylib"]:
                 src_dylib = os.path.join(unlocker_src, dylib)
                 if os.path.exists(src_dylib):
                     shutil.copy2(src_dylib, os.path.join(bundle_path, dylib))
                     logger.log(f"Copied {dylib}")
 
-            # Copy config: thesims4.cfg -> anadius.cfg
             shutil.copy2(
                 os.path.join(unlocker_src, "thesims4.cfg"),
                 os.path.join(bundle_path, "anadius.cfg")
             )
             logger.log("Copied config (thesims4.cfg -> anadius.cfg)")
 
-            # Copy override config: thesims4override.cfg -> anadius_override.cfg
             override_src = os.path.join(unlocker_src, "thesims4override.cfg")
             if os.path.exists(override_src):
                 shutil.copy2(override_src, os.path.join(bundle_path, "anadius_override.cfg"))
                 logger.log("Copied override config")
 
-            # ИСПРАВЛЕНО: Copy or create Info.plist
             plist_src = os.path.join(unlocker_src, "Info.plist")
             plist_dst = os.path.join(app_path, "Contents", "Info.plist")
             
@@ -335,7 +280,6 @@ class UnlockerManager:
                 shutil.copy2(plist_src, plist_dst)
                 logger.log("Copied Info.plist")
             else:
-                # Создаем минимальный Info.plist
                 plist_content = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -358,7 +302,6 @@ class UnlockerManager:
                     f.write(plist_content)
                 logger.log("Created default Info.plist")
             
-            # ИСПРАВЛЕНО: Copy icon if available
             icon_src = os.path.join(unlocker_src, "icon.icns")
             if os.path.exists(icon_src):
                 resources_dir = os.path.join(app_path, "Contents", "Resources")
@@ -366,7 +309,6 @@ class UnlockerManager:
                 shutil.copy2(icon_src, os.path.join(resources_dir, "icon.icns"))
                 logger.log("Copied app icon")
 
-            # Remove quarantine attribute (macOS Gatekeeper)
             try:
                 subprocess.run(
                     ['xattr', '-rc', app_path],
@@ -376,7 +318,6 @@ class UnlockerManager:
             except Exception as e:
                 logger.log(f"Could not remove quarantine: {e}", "WARNING")
 
-            # ИСПРАВЛЕНО: Показываем где именно установлено
             if app_path.startswith("/Applications/"):
                 location_msg = loc_strings["location_app"]
             else:
@@ -394,10 +335,6 @@ class UnlockerManager:
 
     @staticmethod
     def update_sims4_config(logger, game_path=None):
-        """
-        Update the Sims 4 config in the existing .app bundle.
-        ИСПРАВЛЕНО: Теперь также добавляет путь к игре в конфиг.
-        """
         base_dir = UnlockerManager.get_base_path()
         unlocker_src = os.path.join(base_dir, "unlocker_mac", "files")
         
@@ -416,16 +353,13 @@ class UnlockerManager:
             shutil.copy2(src_conf, dst_conf)
             logger.log(f"Updated config: {dst_conf}")
             
-            # Also update override config if available
             override_src = os.path.join(unlocker_src, "thesims4override.cfg")
             if os.path.exists(override_src):
                 shutil.copy2(override_src, os.path.join(bundle_path, "anadius_override.cfg"))
                 logger.log("Updated override config")
             
-            # ИСПРАВЛЕНО: Добавить путь к игре если предоставлен
             if game_path:
                 try:
-                    # Если путь к .app, используем его
                     if game_path.endswith(".app"):
                         with open(dst_conf, 'a', encoding='utf-8') as f:
                             f.write(f"\n[Game]\n")
@@ -440,8 +374,6 @@ class UnlockerManager:
 
     @staticmethod
     def uninstall_ea_unlocker(logger):
-        """Remove the DLC Unlocker .app bundle."""
-        # Kill processes first
         try:
             subprocess.run(['pkill', '-f', 'EADesktop'],
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -468,18 +400,6 @@ class UnlockerManager:
 
     @staticmethod
     def create_game_launcher(logger, game_path=None, loc_strings=None):
-        """
-        НОВОЕ: Создает удобный 1-click лаунчер для игры с DLC.
-        
-        Создает AppleScript приложение которое:
-        1. Запускает DLC Unlocker
-        2. Ждет 2-3 секунды
-        3. Автоматически запускает The Sims 4
-        
-        Пользователю нужно только запустить "Play Sims 4 with DLC.app"
-        """
-        
-        # Default strings if not provided
         if not loc_strings:
             loc_strings = {
                 "launcher_title": "Sims 4 Launcher",
@@ -489,12 +409,10 @@ class UnlockerManager:
                 "launcher_error": "Failed to launch game:"
             }
 
-        # Проверяем что DLC Unlocker установлен
         unlocker_path = UnlockerManager.get_unlocker_app_path()
         if not os.path.exists(unlocker_path):
             return False, "DLC Unlocker not installed. Install it first."
         
-        # Получаем путь к игре из конфига если не предоставлен
         if not game_path:
             try:
                 config = ConfigManager()
@@ -508,22 +426,17 @@ class UnlockerManager:
                 "Please set the game path in Dashboard first."
             )
 
-        # ИСПРАВЛЕНО: Если game_path указывает на папку с паками, пытаемся найти саму игру
         if sys.platform == "darwin" and game_path.endswith("The Sims 4 Packs"):
-            # Предполагаем, что .app лежит рядом
             parent_dir = os.path.dirname(game_path)
             potential_app = os.path.join(parent_dir, "The Sims 4.app")
             if os.path.exists(potential_app):
                  print(f"ℹ️  Found game app at: {potential_app}")
                  game_path = potential_app
             else:
-                 # Попробуем поискать в стандартном месте если рядом нет
                  std_app = "/Applications/The Sims 4.app"
                  if os.path.exists(std_app):
                       game_path = std_app
 
-        
-        # Определяем где создать лаунчер (в той же папке где DLC Unlocker)
         if unlocker_path.startswith("/Applications/"):
             launcher_dir = "/Applications"
         else:
@@ -534,33 +447,22 @@ class UnlockerManager:
         
         logger.log(f"Creating game launcher at: {launcher_path}")
         
-        # AppleScript который запускает сначала unlocker, потом игру
-        # Используем экранирование путей для безопасности
         unlocker_escaped = unlocker_path.replace('"', '\\"')
         game_escaped = game_path.replace('"', '\\"')
         
         applescript = f'''
--- Sims 4 with DLC Launcher
--- Created by Lemon Unlocker
-
 on run
     try
-        -- Показать уведомление
         display notification "{loc_strings['launcher_start_unlocker']}" with title "{loc_strings['launcher_title']}"
         
-        -- Запустить DLC Unlocker (в фоне)
         do shell script "open -g \\"{unlocker_escaped}\\""
         
-        -- Подождать чтобы unlocker инициализировался
         delay 3
         
-        -- Показать уведомление
         display notification "{loc_strings['launcher_start_game']}" with title "{loc_strings['launcher_title']}"
         
-        -- Запустить игру
         do shell script "open \\"{game_escaped}\\""
         
-        -- Успех!
         delay 1
         display notification "{loc_strings['launcher_success']}" with title "{loc_strings['launcher_title']}"
         
@@ -571,7 +473,6 @@ end run
 '''
         
         try:
-            # Создать временный файл со скриптом
             import tempfile
             with tempfile.NamedTemporaryFile(mode='w', suffix='.applescript', 
                                             delete=False, encoding='utf-8') as f:
@@ -580,7 +481,6 @@ end run
             
             logger.log("Compiling AppleScript launcher...")
             
-            # Скомпилировать в .app используя osacompile
             result = subprocess.run(
                 ['osacompile', '-o', launcher_path, script_file],
                 capture_output=True,
@@ -588,7 +488,6 @@ end run
                 timeout=10
             )
             
-            # Удалить временный файл
             os.remove(script_file)
             
             if result.returncode != 0:
@@ -597,20 +496,15 @@ end run
             
             logger.log("Launcher compiled successfully")
             
-            # Попробовать добавить иконку (опционально)
             try:
                 base_dir = UnlockerManager.get_base_path()
                 icon_path = os.path.join(base_dir, "icon.png")
                 
                 if os.path.exists(icon_path):
-                    # Конвертировать PNG в ICNS и установить
-                    # (требует sips и iconutil, доступны на macOS)
                     logger.log("Adding icon to launcher...")
-                    # Это опционально, пропускаем если не получится
             except:
                 pass
             
-            # Удалить quarantine
             try:
                 subprocess.run(['xattr', '-rc', launcher_path],
                              stdout=subprocess.DEVNULL, 
@@ -619,7 +513,6 @@ end run
             except:
                 pass
             
-            # Localized success message
             loc_success_title = loc_strings.get("launcher_created_title", "🚀 Game Launcher created successfully!")
             loc_location = loc_strings.get("launcher_location", "📍 Location: ")
             loc_finder = loc_strings.get("launcher_finder", "(Finder → Applications)")
