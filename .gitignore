@@ -9,7 +9,6 @@ dist/
 
 # Local configuration and logs
 config.json
-dlc_sizes.json
 logs/
 *.log
 check_arch.py
