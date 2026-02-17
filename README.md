@@ -9,7 +9,7 @@ This is the native macOS version of Lemon Unlocker. It includes all the features
 
 ## 📦 Installation
 
-1.  **Download**: Get the latest `LemonUnlocker.dmg` from the [Releases Page](https://github.com/Limon4ik66607/LemonUnlocker_Mac/releases).
+1.  **Download**: Get the latest `LemonUnlocker.dmg` from the [Releases Page](https://github.com/Limon4ik66607/LemonUnlocker_macOS/releases).
 2.  **Open**: Double-click the `.dmg` file.
 3.  **Install**: Drag `Lemon Unlocker` into the `Applications` folder shortcut.
 
