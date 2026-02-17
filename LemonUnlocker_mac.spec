@@ -11,7 +11,6 @@ a = Analysis(
         ('icon.png', '.'),
         ('dlc_database.py', '.'),
         ('dlc_sizes.json', '.'),
-        ('config.json', '.'),
         ('unlocker_mac', 'unlocker_mac'),
         ('7z', '7z'),  # Bundled 7za binary for macOS
     ],
