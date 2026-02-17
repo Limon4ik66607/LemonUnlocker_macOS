@@ -18,6 +18,7 @@ fetch_sizes.py
 icon.png
 git_upload.bat
 build_windows.bat
+build_mac.sh
 app.manifest
 version.txt
 7z/
